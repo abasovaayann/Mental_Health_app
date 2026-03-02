@@ -17,6 +17,8 @@ class UserResponse(UserBase):
     id: int
     is_active: bool
     is_verified: bool
+    baseline_completed: bool
+    baseline_completed_at: Optional[datetime] = None
     created_at: datetime
     
     class Config:

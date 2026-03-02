@@ -51,7 +51,9 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             "firstName": db_user.first_name,
             "lastName": db_user.last_name,
             "isActive": db_user.is_active,
-            "isVerified": db_user.is_verified
+            "isVerified": db_user.is_verified,
+            "baselineCompleted": db_user.baseline_completed,
+            "baselineCompletedAt": db_user.baseline_completed_at
         }
     }
 
@@ -98,7 +100,9 @@ def login(user_credentials: UserLogin, db: Session = Depends(get_db)):
             "firstName": user.first_name,
             "lastName": user.last_name,
             "isActive": user.is_active,
-            "isVerified": user.is_verified
+            "isVerified": user.is_verified,
+            "baselineCompleted": user.baseline_completed,
+            "baselineCompletedAt": user.baseline_completed_at
         }
     }
 
