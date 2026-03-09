@@ -11,10 +11,22 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    degree: Optional[str] = None
+    university: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 
 class UserResponse(UserBase):
     id: int
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    degree: Optional[str] = None
+    university: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
     is_active: bool
     is_verified: bool
     baseline_completed: bool

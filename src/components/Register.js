@@ -8,6 +8,12 @@ const Register = ({ onSuccess }) => {
     email: '',
     password: '',
     confirmPassword: '',
+    age: '',
+    gender: '',
+    degree: '',
+    university: '',
+    city: '',
+    country: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -177,6 +183,109 @@ const Register = ({ onSuccess }) => {
             </button>
           </div>
         </label>
+
+        {/* Demographic Information Section */}
+        <div className="pt-4 border-t border-border-medium dark:border-gray-700">
+          <p className="text-text-heading dark:text-white text-sm font-semibold mb-4">
+            Additional Information (Optional)
+          </p>
+
+          <div className="flex gap-4 mb-5">
+            <label className="flex flex-col gap-2 flex-1">
+              <p className="text-text-heading dark:text-white text-sm font-semibold leading-normal">
+                Age
+              </p>
+              <input
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-body dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/20 border border-border-medium dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal transition-all shadow-sm"
+                placeholder="25"
+                type="number"
+                name="age"
+                min="16"
+                max="100"
+                value={formData.age}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 flex-1">
+              <p className="text-text-heading dark:text-white text-sm font-semibold leading-normal">
+                Gender
+              </p>
+              <select
+                className="form-select flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-body dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/20 border border-border-medium dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-14 px-[15px] text-base font-normal leading-normal transition-all shadow-sm"
+                name="gender"
+                value={formData.gender}
+                onChange={handleChange}
+              >
+                <option value="">Select gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Non-binary">Non-binary</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="flex gap-4 mb-5">
+            <label className="flex flex-col gap-2 flex-1">
+              <p className="text-text-heading dark:text-white text-sm font-semibold leading-normal">
+                Degree Program
+              </p>
+              <input
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-body dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/20 border border-border-medium dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal transition-all shadow-sm"
+                placeholder="Computer Science"
+                type="text"
+                name="degree"
+                value={formData.degree}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 flex-1">
+              <p className="text-text-heading dark:text-white text-sm font-semibold leading-normal">
+                University
+              </p>
+              <input
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-body dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/20 border border-border-medium dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal transition-all shadow-sm"
+                placeholder="University name"
+                type="text"
+                name="university"
+                value={formData.university}
+                onChange={handleChange}
+              />
+            </label>
+          </div>
+
+          <div className="flex gap-4">
+            <label className="flex flex-col gap-2 flex-1">
+              <p className="text-text-heading dark:text-white text-sm font-semibold leading-normal">
+                City
+              </p>
+              <input
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-body dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/20 border border-border-medium dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal transition-all shadow-sm"
+                placeholder="New York"
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleChange}
+              />
+            </label>
+
+            <label className="flex flex-col gap-2 flex-1">
+              <p className="text-text-heading dark:text-white text-sm font-semibold leading-normal">
+                Country
+              </p>
+              <input
+                className="form-input flex w-full min-w-0 resize-none overflow-hidden rounded-xl text-text-body dark:text-white focus:outline-0 focus:ring-4 focus:ring-primary/20 border border-border-medium dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-primary h-14 placeholder:text-slate-400 dark:placeholder:text-gray-500 p-[15px] text-base font-normal leading-normal transition-all shadow-sm"
+                placeholder="United States"
+                type="text"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+              />
+            </label>
+          </div>
+        </div>
 
         <button
           className="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl h-12 px-5 bg-primary hover:bg-primary-dark text-white text-base font-bold leading-normal tracking-[0.015em] shadow-lg shadow-primary/25 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
