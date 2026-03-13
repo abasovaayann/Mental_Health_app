@@ -37,6 +37,22 @@ class UserResponse(UserBase):
         from_attributes = True
 
 
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    degree: Optional[str] = None
+    university: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str

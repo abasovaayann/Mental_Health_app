@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, UserUpdate, PasswordChange
 from app.utils.auth import verify_password, get_password_hash, create_access_token
 from app.utils.dependencies import get_current_user
 from app.config import settings
@@ -120,3 +120,106 @@ def get_current_user_info(
 ):
     """Get current user information."""
     return current_user
+
+
+@router.put("/profile", response_model=dict)
+def update_profile(
+    profile_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Update current user's profile."""
+    update_fields = profile_data.model_dump(exclude_unset=True)
+    for field, value in update_fields.items():
+        setattr(current_user, field, value)
+    db.commit()
+    db.refresh(current_user)
+    return {
+        "message": "Profile updated successfully",
+        "user": {
+            "id": current_user.id,
+            "email": current_user.email,
+            "firstName": current_user.first_name,
+            "lastName": current_user.last_name,
+            "age": current_user.age,
+            "gender": current_user.gender,
+            "degree": current_user.degree,
+            "university": current_user.university,
+            "city": current_user.city,
+            "country": current_user.country,
+        }
+    }
+
+
+@router.put("/change-password", response_model=dict)
+def change_password(
+    password_data: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Change current user's password."""
+    if not verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    db.commit()
+    return {"message": "Password changed successfully"}
+
+
+@router.delete("/account", response_model=dict)
+def delete_account(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Delete current user's account and all associated data."""
+    from app.models.survey import BaselineSurvey
+    db.query(BaselineSurvey).filter(BaselineSurvey.user_id == current_user.id).delete()
+    db.delete(current_user)
+    db.commit()
+    return {"message": "Account deleted successfully"}
+
+
+@router.get("/export-data", response_model=dict)
+def export_user_data(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Export all user data as JSON."""
+    from app.models.survey import BaselineSurvey
+    survey = db.query(BaselineSurvey).filter(
+        BaselineSurvey.user_id == current_user.id
+    ).first()
+
+    survey_data = None
+    if survey:
+        survey_data = {
+            "sleep_duration": survey.sleep_duration,
+            "energy_level": survey.energy_level,
+            "academic_pressure": survey.academic_pressure,
+            "study_motivation": survey.study_motivation,
+            "concentration_difficulty": survey.concentration_difficulty,
+            "morning_mood": survey.morning_mood,
+            "emotional_low": survey.emotional_low,
+            "anxiety_level": survey.anxiety_level,
+            "social_support": survey.social_support,
+            "financial_stress": survey.financial_stress,
+            "created_at": str(survey.created_at),
+        }
+
+    return {
+        "profile": {
+            "email": current_user.email,
+            "first_name": current_user.first_name,
+            "last_name": current_user.last_name,
+            "age": current_user.age,
+            "gender": current_user.gender,
+            "degree": current_user.degree,
+            "university": current_user.university,
+            "city": current_user.city,
+            "country": current_user.country,
+            "created_at": str(current_user.created_at),
+        },
+        "baseline_survey": survey_data,
+    }
