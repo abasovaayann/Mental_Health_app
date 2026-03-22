@@ -23,13 +23,13 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen w-full flex-col">
+    <div className="relative flex h-screen w-full flex-col overflow-hidden">
       <Header />
       
-      <main className="flex flex-1 flex-col lg:flex-row">
+      <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
         {/* Left Section - Hero */}
         <section
-          className="hidden lg:flex lg:w-1/2 xl:w-5/12 relative flex-col justify-end p-12 overflow-hidden bg-cover bg-center"
+          className="relative hidden flex-col justify-end overflow-hidden bg-cover bg-center p-12 lg:flex lg:h-full lg:w-1/2 xl:w-5/12"
           style={{
             backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuCap2LnAhEYQ3ZGoeHT99C-SPaC6BkQZu51UxD9wAy7q-uDKLxT_-NTPVa95V7g2kiF14IsHGiRq_JbKm4FCJos8C_AlWbE_pg6-0ZCI7wm6agbW4Zx2tS3d5rs2GHdIlQhM_i_6bsnkYkxg2cdVxep0NorPHQFFlJn_fD7xS8BroYl4Byf9HHwqx0Kll4vPUlkEMKYISwvIuEu1mdmQ3IDey928sd54wmzK2fGtOXmXT2u6cVc2_9jqE8t0jdZh80wfVO3Lhw5og')",
           }}
@@ -38,9 +38,6 @@ const AuthPage = () => {
           <div className="absolute inset-0 bg-primary/30 mix-blend-overlay z-0"></div>
           
           <div className="relative z-10 flex flex-col gap-6 max-w-lg pb-8">
-            <div className="size-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white mb-2 shadow-inner shadow-white/10">
-              <span className="material-symbols-outlined">format_quote</span>
-            </div>
             <h1 className="text-white text-4xl xl:text-5xl font-black leading-tight tracking-[-0.033em]">
               Your mental health is a priority. Your happiness is an essential.
             </h1>
@@ -48,7 +45,7 @@ const AuthPage = () => {
         </section>
 
         {/* Right Section - Auth Forms */}
-        <section className="flex flex-1 flex-col items-center justify-center p-6 lg:p-12 bg-background-light dark:bg-background-dark">
+        <section className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto bg-background-light p-6 dark:bg-background-dark lg:p-12">
           <div className="w-full max-w-[480px] flex flex-col gap-6">
             {/* Tabs */}
             <div className="w-full">
@@ -80,7 +77,7 @@ const AuthPage = () => {
             {activeTab === 'login' ? (
               <Login onSuccess={handleAuthSuccess} />
             ) : (
-              <Register onSuccess={handleAuthSuccess} />
+              <Register onSuccess={handleAuthSuccess} onSwitchToLogin={() => setActiveTab('login')} />
             )}
           </div>
         </section>

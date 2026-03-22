@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { authService } from '../api/authService';
 
-const Register = ({ onSuccess }) => {
+const Register = ({ onSuccess, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -294,6 +294,17 @@ const Register = ({ onSuccess }) => {
         >
           <span className="truncate">{loading ? 'Creating Account...' : 'Create Account'}</span>
         </button>
+
+        <p className="text-center text-sm text-text-muted dark:text-gray-400">
+          Already have an account?{' '}
+          <button
+            type="button"
+            className="font-semibold text-primary hover:text-primary-dark hover:underline"
+            onClick={onSwitchToLogin}
+          >
+            Login
+          </button>
+        </p>
       </form>
 
       <p className="text-center text-xs text-text-muted dark:text-gray-400 mt-4">
