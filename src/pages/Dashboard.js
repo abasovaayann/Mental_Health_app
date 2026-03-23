@@ -16,6 +16,12 @@ const DAILY_CHECKIN_FIELDS = [
   { key: 'energyLevel', label: 'Energy Level', icon: 'bolt' },
 ];
 
+const mapApiCheckinToUi = (row) => ({
+  moodLevel: Number(row.mood_level),
+  sleepQuality: Number(row.sleep_quality),
+  energyLevel: Number(row.energy_level),
+});
+
 const getDateKey = (date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -145,11 +151,12 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const [profileResult, scoreResult, activityResult, diaryResult] = await Promise.allSettled([
+      const [profileResult, scoreResult, activityResult, diaryResult, checkinsResult] = await Promise.allSettled([
         api.get('/auth/me'),
         api.get('/survey/wellness-score'),
         api.get('/survey/activity-stats'),
         api.get('/diary/stats'),
+        api.get('/survey/daily-checkins'),
       ]);
 
       if (profileResult.status === 'fulfilled') {
@@ -194,13 +201,29 @@ const Dashboard = () => {
         console.error('Could not load diary stats', diaryResult.reason);
       }
 
+      if (checkinsResult.status === 'fulfilled') {
+        const rows = Array.isArray(checkinsResult.value.data) ? checkinsResult.value.data : [];
+        const historyMap = rows.reduce((acc, row) => {
+          acc[row.checkin_date] = mapApiCheckinToUi(row);
+          return acc;
+        }, {});
+        setDailyCheckinHistory(historyMap);
+        const currentDateKey = getDateKey(new Date());
+        if (historyMap[currentDateKey]) {
+          setDailyCheckin(historyMap[currentDateKey]);
+        }
+      } else if (checkinsResult.reason?.response?.status !== 404) {
+        console.error('Could not load daily check-ins', checkinsResult.reason);
+      }
+
       if (
         profileResult.status === 'rejected' &&
         scoreResult.status === 'rejected' &&
         activityResult.status === 'rejected' &&
-        diaryResult.status === 'rejected'
+        diaryResult.status === 'rejected' &&
+        checkinsResult.status === 'rejected'
       ) {
-        const firstError = profileResult.reason || scoreResult.reason || activityResult.reason || diaryResult.reason;
+        const firstError = profileResult.reason || scoreResult.reason || activityResult.reason || diaryResult.reason || checkinsResult.reason;
         if (firstError?.response?.status !== 404) {
           console.error('Could not load dashboard data', firstError);
         }
@@ -215,42 +238,6 @@ const Dashboard = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
-
-    const key = `dashboard_daily_checkin_${user.id}`;
-    try {
-      const stored = JSON.parse(localStorage.getItem(key) || 'null');
-      if (stored && typeof stored === 'object') {
-        setDailyCheckin((prev) => ({
-          moodLevel: Number.isFinite(stored.moodLevel) ? stored.moodLevel : prev.moodLevel,
-          sleepQuality: Number.isFinite(stored.sleepQuality) ? stored.sleepQuality : prev.sleepQuality,
-          energyLevel: Number.isFinite(stored.energyLevel) ? stored.energyLevel : prev.energyLevel,
-        }));
-      }
-    } catch {
-      // Ignore malformed local storage payloads.
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
-
-    const historyKey = `dashboard_daily_checkin_history_${user.id}`;
-    try {
-      const storedHistory = JSON.parse(localStorage.getItem(historyKey) || '{}');
-      if (storedHistory && typeof storedHistory === 'object') {
-        setDailyCheckinHistory(storedHistory);
-      }
-    } catch {
-      setDailyCheckinHistory({});
-    }
-  }, [user?.id]);
-
   const handleCheckinChange = (field, value) => {
     setDailyCheckin((prev) => ({ ...prev, [field]: Number(value) }));
   };
@@ -263,21 +250,23 @@ const Dashboard = () => {
     [todaysSavedCheckin, dailyCheckin]
   );
 
-  const handleSaveDailyCheckin = () => {
-    if (!user?.id) {
-      return;
+  const handleSaveDailyCheckin = async () => {
+    try {
+      await api.put('/survey/daily-checkin', {
+        checkin_date: todayKey,
+        mood_level: Number(dailyCheckin.moodLevel),
+        sleep_quality: Number(dailyCheckin.sleepQuality),
+        energy_level: Number(dailyCheckin.energyLevel),
+      });
+
+      const nextHistory = {
+        ...dailyCheckinHistory,
+        [todayKey]: dailyCheckin,
+      };
+      setDailyCheckinHistory(nextHistory);
+    } catch (error) {
+      console.error('Failed to save daily check-in', error);
     }
-
-    const nextHistory = {
-      ...dailyCheckinHistory,
-      [todayKey]: dailyCheckin,
-    };
-
-    const checkinKey = `dashboard_daily_checkin_${user.id}`;
-    const historyKey = `dashboard_daily_checkin_history_${user.id}`;
-    localStorage.setItem(checkinKey, JSON.stringify(dailyCheckin));
-    localStorage.setItem(historyKey, JSON.stringify(nextHistory));
-    setDailyCheckinHistory(nextHistory);
   };
 
   const todayLabel = useMemo(
