@@ -25,3 +25,8 @@ yarn-error.log*
 # IDE
 .vscode
 .idea
+
+# ML artifacts (keep local, do not commit large binaries)
+backend/ml/artifacts/*.joblib
+backend/ml/artifacts/*.pkl
+backend/ml/artifacts/*.png

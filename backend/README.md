@@ -15,12 +15,20 @@ venv\Scripts\activate  # On Windows
 pip install -r requirements.txt
 ```
 
-3. Configure database:
+3. Configure Google Speech-to-Text credentials (for diary voice transcription):
+- Create a Google Cloud service account with Speech-to-Text access.
+- Download the JSON key file.
+- Set environment variable before starting backend:
+```bash
+set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\service-account.json
+```
+
+4. Configure database:
 - Install PostgreSQL
 - Create database: `mindtrackai_db`
 - Update `.env` file with your database credentials
 
-4. Run the server:
+5. Run the server:
 ```bash
 python run.py
 ```

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -27,3 +27,19 @@ class BaselineSurvey(Base):
     financial_stress = Column(String, nullable=False)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class DailyCheckin(Base):
+    __tablename__ = "daily_checkins"
+    __table_args__ = (
+        UniqueConstraint("user_id", "checkin_date", name="uq_daily_checkins_user_date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("app_users.id"), nullable=False, index=True)
+    checkin_date = Column(Date, nullable=False, index=True)
+    mood_level = Column(Integer, nullable=False)
+    sleep_quality = Column(Integer, nullable=False)
+    energy_level = Column(Integer, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

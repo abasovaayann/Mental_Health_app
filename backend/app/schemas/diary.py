@@ -34,3 +34,7 @@ class DiaryEntryResponse(BaseModel):
 class DiaryStatsResponse(BaseModel):
     total_entries: int
     last_entry_at: datetime | None
+
+
+class SpeechToTextResponse(BaseModel):
+    transcript: str

@@ -1,19 +1,70 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.database import get_db
 from app.models.user import User
-from app.models.survey import BaselineSurvey
+from app.models.survey import BaselineSurvey, DailyCheckin
 from app.schemas.survey import (
     BaselineSurveyCreate,
     BaselineSurveyResponse,
-    BaselineCompleteResponse
+    BaselineCompleteResponse,
+    DailyCheckinUpsert,
+    DailyCheckinResponse,
 )
 from app.utils.dependencies import get_current_user
 from ml.predict import predict_wellness
 
 router = APIRouter()
+
+
+@router.get("/daily-checkins", response_model=list[DailyCheckinResponse])
+async def list_daily_checkins(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    rows = (
+        db.query(DailyCheckin)
+        .filter(DailyCheckin.user_id == current_user.id)
+        .order_by(DailyCheckin.checkin_date.desc())
+        .all()
+    )
+    return rows
+
+
+@router.put("/daily-checkin", response_model=DailyCheckinResponse)
+async def upsert_daily_checkin(
+    payload: DailyCheckinUpsert,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    row = (
+        db.query(DailyCheckin)
+        .filter(
+            DailyCheckin.user_id == current_user.id,
+            DailyCheckin.checkin_date == payload.checkin_date,
+        )
+        .first()
+    )
+
+    if row:
+        row.mood_level = payload.mood_level
+        row.sleep_quality = payload.sleep_quality
+        row.energy_level = payload.energy_level
+        row.updated_at = datetime.utcnow()
+    else:
+        row = DailyCheckin(
+            user_id=current_user.id,
+            checkin_date=payload.checkin_date,
+            mood_level=payload.mood_level,
+            sleep_quality=payload.sleep_quality,
+            energy_level=payload.energy_level,
+        )
+        db.add(row)
+
+    db.commit()
+    db.refresh(row)
+    return row
 
 
 @router.post("/baseline", response_model=BaselineSurveyResponse, status_code=status.HTTP_201_CREATED)
@@ -141,4 +192,38 @@ async def get_wellness_score(
     return {
         "user_id":    current_user.id,
         "prediction": prediction,
+    }
+
+
+@router.get("/activity-stats")
+async def get_activity_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Return lightweight dashboard activity metrics.
+    """
+    rows = db.query(BaselineSurvey.created_at).filter(
+        BaselineSurvey.user_id == current_user.id
+    ).order_by(BaselineSurvey.created_at.desc()).all()
+
+    timestamps = [row[0] for row in rows if row[0] is not None]
+    unique_dates = sorted({stamp.date() for stamp in timestamps}, reverse=True)
+
+    current_streak = 0
+    if unique_dates:
+        today = datetime.utcnow().date()
+        expected_day = today if unique_dates[0] == today else unique_dates[0]
+
+        for day in unique_dates:
+            if day == expected_day:
+                current_streak += 1
+                expected_day = expected_day - timedelta(days=1)
+            elif day < expected_day:
+                break
+
+    return {
+        "total_entries": len(timestamps),
+        "current_streak": current_streak,
+        "last_entry_at": timestamps[0] if timestamps else None,
     }

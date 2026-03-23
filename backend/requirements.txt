@@ -10,3 +10,4 @@ pydantic-settings==2.7.0
 python-dotenv==1.0.1
 alembic==1.14.0
 bcrypt==4.2.1
+google-cloud-speech==2.28.0

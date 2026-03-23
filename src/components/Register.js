@@ -1,6 +1,47 @@
 import React, { useState } from 'react';
 import { authService } from '../api/authService';
 
+const validatePassword = (password) => {
+  if (password.length < 8) {
+    return 'Password must be at least 8 characters long';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must include at least one uppercase letter';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must include at least one lowercase letter';
+  }
+  if (!/\d/.test(password)) {
+    return 'Password must include at least one number';
+  }
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return 'Password must include at least one special character';
+  }
+  return null;
+};
+
+const getApiErrorMessage = (err, fallback) => {
+  const detail = err?.response?.data?.detail;
+  const message = err?.response?.data?.message;
+
+  if (typeof detail === 'string' && detail.trim()) {
+    return detail;
+  }
+
+  if (Array.isArray(detail) && detail.length) {
+    const first = detail[0];
+    if (first?.msg) {
+      return first.msg;
+    }
+  }
+
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  return fallback;
+};
+
 const Register = ({ onSuccess, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -40,9 +81,10 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
       return;
     }
 
-    // Validate password strength
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters long');
+    // Validate password strength to match backend policy
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      setError(passwordError);
       setLoading(false);
       return;
     }
@@ -54,7 +96,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
         onSuccess();
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      setError(getApiErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }

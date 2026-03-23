@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Text
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -25,6 +25,7 @@ class User(Base):
     is_verified = Column(Boolean, default=False, nullable=False)
     baseline_completed = Column(Boolean, default=False, nullable=False)
     baseline_completed_at = Column(DateTime(timezone=True), nullable=True)
+    preferences_json = Column(Text, nullable=False, default='{}')
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

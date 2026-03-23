@@ -1,11 +1,28 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.config import settings
 from app.api.router import api_router
 from app.database import engine, Base
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+
+def ensure_schema_compatibility() -> None:
+    # Keep older local databases compatible with newer models without manual migration.
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                ALTER TABLE IF EXISTS app_users
+                ADD COLUMN IF NOT EXISTS preferences_json TEXT NOT NULL DEFAULT '{}'
+                """
+            )
+        )
+
+
+ensure_schema_compatibility()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

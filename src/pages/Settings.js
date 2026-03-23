@@ -18,11 +18,39 @@ const SETTINGS_SECTIONS = [
   { key: 'privacy', label: 'Privacy & Security', icon: 'shield' },
 ];
 
-/* ─── Helpers ─── */
-const load = (key, fallback) => {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+const DEFAULT_PREFS = {
+  notifications: {
+    dailyCheckin: true,
+    weeklyReport: true,
+    aiRecommendations: true,
+    diaryReminder: false,
+    reminderTime: '20:00',
+    channelEmail: false,
+    channelInApp: true,
+  },
+  privacy: {
+    biometricLock: false,
+    anonymousResearch: false,
+    sessionTimeout: 30,
+  },
+  appearance: {
+    theme: 'system',
+    language: 'en',
+    fontSize: 16,
+    reduceAnimations: false,
+  },
+  diary: {
+    inputMode: 'text',
+    aiMoodAnalysis: true,
+    autoSave: true,
+    weeklyReportInclude: true,
+  },
+  voice: {
+    micSensitivity: 50,
+    transcriptionLang: 'en',
+    recordingQuality: 'standard',
+  },
 };
-const save = (key, val) => localStorage.setItem(key, JSON.stringify(val));
 
 /* ─── Toggle ─── */
 const Toggle = ({ checked, onChange, disabled }) => (
@@ -95,62 +123,91 @@ const Settings = () => {
   const [profileSaving, setProfileSaving] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [passwordSaving, setPasswordSaving] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
 
-  /* ── Notification prefs (localStorage) ── */
-  const [notif, setNotif] = useState(() => load('settings_notifications', {
-    dailyCheckin: true, weeklyReport: true, aiRecommendations: true, diaryReminder: false,
-    reminderTime: '20:00', channelEmail: false, channelInApp: true,
-  }));
+  /* ── Notification prefs ── */
+  const [notif, setNotif] = useState(DEFAULT_PREFS.notifications);
 
   /* ── Privacy ── */
-  const [privacy, setPrivacy] = useState(() => load('settings_privacy', {
-    biometricLock: false, anonymousResearch: false, sessionTimeout: 30,
-  }));
+  const [privacy, setPrivacy] = useState(DEFAULT_PREFS.privacy);
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   /* ── Appearance ── */
-  const [appearance, setAppearance] = useState(() => load('settings_appearance', {
-    theme: 'system', language: 'en', fontSize: 16, reduceAnimations: false,
-  }));
+  const [appearance, setAppearance] = useState(DEFAULT_PREFS.appearance);
 
   /* ── Diary ── */
-  const [diary, setDiary] = useState(() => load('settings_diary', {
-    inputMode: 'text', aiMoodAnalysis: true, autoSave: true, weeklyReportInclude: true,
-  }));
+  const [diary, setDiary] = useState(DEFAULT_PREFS.diary);
 
   /* ── Voice ── */
-  const [voice, setVoice] = useState(() => load('settings_voice', {
-    micSensitivity: 50, transcriptionLang: 'en', recordingQuality: 'standard',
-  }));
+  const [voice, setVoice] = useState(DEFAULT_PREFS.voice);
 
   /* ── Init ── */
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (!userData) { navigate('/auth'); return; }
+    localStorage.removeItem('settings_notifications');
+    localStorage.removeItem('settings_privacy');
+    localStorage.removeItem('settings_appearance');
+    localStorage.removeItem('settings_diary');
+    localStorage.removeItem('settings_voice');
     const u = JSON.parse(userData);
     setUser(u);
-    // Fetch fresh profile from API
-    api.get('/auth/me').then(res => {
-      const d = res.data;
-      setProfileForm({
-        first_name: d.first_name || '', last_name: d.last_name || '',
-        age: d.age ?? '', gender: d.gender || '', degree: d.degree || '',
-        university: d.university || '', city: d.city || '', country: d.country || '',
-      });
-    }).catch(() => {
-      // Fallback to local
-      setProfileForm(f => ({ ...f, first_name: u.firstName || '', last_name: u.lastName || '' }));
-    });
+
+    const loadAll = async () => {
+      try {
+        const [meRes, prefsRes] = await Promise.all([
+          api.get('/auth/me'),
+          api.get('/auth/preferences'),
+        ]);
+
+        const d = meRes.data;
+        setProfileForm({
+          first_name: d.first_name || '', last_name: d.last_name || '',
+          age: d.age ?? '', gender: d.gender || '', degree: d.degree || '',
+          university: d.university || '', city: d.city || '', country: d.country || '',
+        });
+
+        const prefs = prefsRes.data || DEFAULT_PREFS;
+        setNotif(prefs.notifications || DEFAULT_PREFS.notifications);
+        setPrivacy(prefs.privacy || DEFAULT_PREFS.privacy);
+        setAppearance(prefs.appearance || DEFAULT_PREFS.appearance);
+        setDiary(prefs.diary || DEFAULT_PREFS.diary);
+        setVoice(prefs.voice || DEFAULT_PREFS.voice);
+      } catch {
+        setProfileForm(f => ({ ...f, first_name: u.firstName || '', last_name: u.lastName || '' }));
+      } finally {
+        setPrefsLoaded(true);
+      }
+    };
+
+    loadAll();
   }, [navigate]);
 
-  /* ── Persist local prefs ── */
-  useEffect(() => { save('settings_notifications', notif); }, [notif]);
-  useEffect(() => { save('settings_privacy', privacy); }, [privacy]);
-  useEffect(() => { save('settings_appearance', appearance); applyTheme(appearance.theme); }, [appearance]);
-  useEffect(() => { save('settings_diary', diary); }, [diary]);
-  useEffect(() => { save('settings_voice', voice); }, [voice]);
+  useEffect(() => { applyTheme(appearance.theme); }, [appearance]);
+
+  useEffect(() => {
+    if (!prefsLoaded) {
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        await api.put('/auth/preferences', {
+          notifications: notif,
+          privacy,
+          appearance,
+          diary,
+          voice,
+        });
+      } catch {
+        // Keep the UI responsive even if background preference save fails.
+      }
+    }, 450);
+
+    return () => clearTimeout(timeout);
+  }, [prefsLoaded, notif, privacy, appearance, diary, voice]);
 
   const applyTheme = (theme) => {
     const root = document.documentElement;
@@ -224,6 +281,7 @@ const Settings = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     navigate('/auth');
   };

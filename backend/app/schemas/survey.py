@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, date
 
 
 class BaselineSurveyCreate(BaseModel):
@@ -72,6 +72,27 @@ class BaselineCompleteResponse(BaseModel):
     message: str
     baseline_completed: bool
     baseline_completed_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DailyCheckinUpsert(BaseModel):
+    checkin_date: date
+    mood_level: int = Field(..., ge=0, le=100)
+    sleep_quality: int = Field(..., ge=0, le=100)
+    energy_level: int = Field(..., ge=0, le=100)
+
+
+class DailyCheckinResponse(BaseModel):
+    id: int
+    user_id: int
+    checkin_date: date
+    mood_level: int
+    sleep_quality: int
+    energy_level: int
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

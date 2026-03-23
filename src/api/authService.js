@@ -1,13 +1,30 @@
 import api from './axios';
 
+const setAuthState = (data) => {
+  const refreshToken = data.refreshToken || data.refresh_token;
+
+  if (data.token) {
+    localStorage.setItem('token', data.token);
+  }
+  if (refreshToken) {
+    localStorage.setItem('refreshToken', refreshToken);
+  }
+  if (data.user) {
+    localStorage.setItem('user', JSON.stringify(data.user));
+  }
+};
+
+const clearAuthState = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('refreshToken');
+  localStorage.removeItem('user');
+};
+
 export const authService = {
   // Login user
   login: async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
+    setAuthState(response.data);
     return response.data;
   },
 
@@ -27,17 +44,13 @@ export const authService = {
       country: userData.country || null
     };
     const response = await api.post('/auth/register', backendData);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-    }
+    setAuthState(response.data);
     return response.data;
   },
 
   // Logout user
   logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuthState();
   },
 
   // Get current user

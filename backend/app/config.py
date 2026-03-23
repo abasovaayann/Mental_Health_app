@@ -10,6 +10,15 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
+    JWT_ISSUER: str = "mindtrackai-api"
+    JWT_AUDIENCE: str = "mindtrackai-client"
+
+    # Security defaults
+    PASSWORD_MIN_LENGTH: int = 8
+    AUTH_RATE_LIMIT_WINDOW_SECONDS: int = 300
+    AUTH_RATE_LIMIT_MAX_ATTEMPTS: int = 5
+    AUTH_RATE_LIMIT_BLOCK_SECONDS: int = 600
     
     # API
     API_V1_PREFIX: str = "/api"

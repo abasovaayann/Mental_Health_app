@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 
@@ -20,14 +20,12 @@ const DAILY_PROMPTS = [
 
 const TAG_SUGGESTIONS = ['study', 'sleep', 'exam', 'family', 'anxiety', 'focus', 'gratitude', 'stress'];
 
-const VOICE_TRANSCRIPT_SNIPPETS = [
-  'Today felt busy at first,',
-  'then I noticed I slowed down after lunch,',
-  'and that helped me think more clearly.',
-  'I want to keep this calmer pace tomorrow.'
-];
-
 const CALENDAR_VISIBLE_ENTRIES_LIMIT = 6;
+
+const VOICE_LANGUAGES = [
+  { value: 'en-US', label: 'English' },
+  { value: 'ru-RU', label: 'Russian' },
+];
 
 const formatDateInput = (date) => {
   const year = date.getFullYear();
@@ -163,9 +161,23 @@ const Diary = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [transcript, setTranscript] = useState('');
+  const [voiceLanguage, setVoiceLanguage] = useState('en-US');
+  const [recordingError, setRecordingError] = useState('');
+  const [isTranscribing, setIsTranscribing] = useState(false);
   const [savedVoiceNote, setSavedVoiceNote] = useState(false);
   const [sameDayModalOpen, setSameDayModalOpen] = useState(false);
   const [recentEntriesModalOpen, setRecentEntriesModalOpen] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const mediaStreamRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const shouldTranscribeRef = useRef(true);
+
+  const speechSupported = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  }, []);
 
   useEffect(() => {
     // Cleanup legacy local-storage entry cache now that diary uses database-backed APIs.
@@ -300,16 +312,27 @@ const Diary = () => {
     }
 
     const interval = setInterval(() => {
-      setRecordSeconds((prev) => {
-        const next = prev + 1;
-        const snippetCount = Math.min(Math.floor(next / 4), VOICE_TRANSCRIPT_SNIPPETS.length);
-        setTranscript(VOICE_TRANSCRIPT_SNIPPETS.slice(0, snippetCount).join(' '));
-        return next;
-      });
+      setRecordSeconds((prev) => prev + 1);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [isRecording]);
+
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try {
+          mediaRecorderRef.current.stop();
+        } catch (error) {
+          // Ignore cleanup errors when recorder already stopped.
+        }
+      }
+
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (saveState !== 'success') {
@@ -479,30 +502,136 @@ const Diary = () => {
     setTags((prev) => prev.filter((tag) => tag !== value));
   };
 
-  const startRecording = () => {
+  const startRecording = async () => {
+    if (!speechSupported || isRecording) {
+      return;
+    }
+
+    setRecordingError('');
     setRecordSeconds(0);
     setTranscript('');
+    audioChunksRef.current = [];
+    shouldTranscribeRef.current = true;
     setSavedVoiceNote(false);
-    setIsRecording(true);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        setRecordingError('Audio recording failed. Please try again.');
+        setIsRecording(false);
+      };
+
+      recorder.onstop = async () => {
+        setIsRecording(false);
+
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+          mediaStreamRef.current = null;
+        }
+
+        if (!shouldTranscribeRef.current) {
+          audioChunksRef.current = [];
+          return;
+        }
+
+        if (!audioChunksRef.current.length) {
+          setRecordingError('No audio captured. Please try again.');
+          return;
+        }
+
+        setIsTranscribing(true);
+
+        try {
+          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          const formData = new FormData();
+          formData.append('audio_file', blob, 'voice-note.webm');
+          formData.append('language_code', voiceLanguage);
+
+          const response = await api.post('/diary/speech-to-text', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+
+          const transcribedText = (response.data?.transcript || '').trim();
+          setTranscript(transcribedText);
+
+          if (transcribedText) {
+            setSavedVoiceNote(true);
+            setContent((prev) => {
+              if (!prev.trim()) {
+                return transcribedText;
+              }
+              if (prev.includes(transcribedText)) {
+                return prev;
+              }
+              return `${prev.trim()}\n\nVoice note: ${transcribedText}`;
+            });
+          } else {
+            setRecordingError('No speech recognized. Try speaking louder or recording longer.');
+          }
+        } catch (error) {
+          const detail = error.response?.data?.detail;
+          setRecordingError(typeof detail === 'string' ? detail : 'Transcription failed. Please try again.');
+        } finally {
+          setIsTranscribing(false);
+          audioChunksRef.current = [];
+        }
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      setRecordingError('Microphone permission is required to use voice diary.');
+      setIsRecording(false);
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+      return;
+    }
+
+    setTranscript('');
   };
 
   const stopAndSaveRecording = () => {
-    setIsRecording(false);
-    setSavedVoiceNote(true);
-    if (transcript.trim()) {
-      setContent((prev) => {
-        if (!prev.trim()) {
-          return transcript.trim();
-        }
-        return `${prev.trim()}\n\nVoice note: ${transcript.trim()}`;
-      });
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (error) {
+        // Ignore stop errors if recorder is already stopped.
+      }
     }
+    setIsRecording(false);
   };
 
   const discardRecording = () => {
+    shouldTranscribeRef.current = false;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch (error) {
+        // Ignore stop errors if recorder is already stopped.
+      }
+    }
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
     setIsRecording(false);
+    setIsTranscribing(false);
     setRecordSeconds(0);
     setTranscript('');
+    audioChunksRef.current = [];
+    setRecordingError('');
     setSavedVoiceNote(false);
   };
 
@@ -969,25 +1098,64 @@ const Diary = () => {
 
                   <div className="text-center">
                     <p className="text-3xl font-mono font-bold text-slate-800 dark:text-white">{formatDuration(recordSeconds)}</p>
-                    <p className="mt-1 text-sm text-slate-400">Tap to {isRecording ? 'pause' : 'start'} recording</p>
+                    <p className="mt-1 text-sm text-slate-400">Tap to {isRecording ? 'stop' : 'start'} recording</p>
                   </div>
 
+                  <div className="w-full">
+                    <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Recognition language</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {VOICE_LANGUAGES.map((lang) => (
+                        <button
+                          key={lang.value}
+                          type="button"
+                          disabled={isRecording}
+                          onClick={() => setVoiceLanguage(lang.value)}
+                          className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
+                            voiceLanguage === lang.value
+                              ? 'border-primary bg-primary/10 text-primary'
+                              : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                          } disabled:cursor-not-allowed disabled:opacity-60`}
+                        >
+                          {lang.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {!speechSupported && (
+                    <p className="w-full rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                      Audio recording is not supported in this browser. Try Chrome or Edge.
+                    </p>
+                  )}
+
+                  {recordingError && (
+                    <p className="w-full rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
+                      {recordingError}
+                    </p>
+                  )}
+
                   <div className="flex w-full gap-3">
-                    <button type="button" onClick={startRecording} disabled={isRecording} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
+                    <button type="button" onClick={startRecording} disabled={isRecording || isTranscribing || !speechSupported} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
                       Start
                     </button>
                     <button type="button" onClick={stopAndSaveRecording} disabled={!isRecording} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
                       Stop &amp; Save
                     </button>
-                    <button type="button" onClick={discardRecording} className="flex-1 rounded-full bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                    <button type="button" onClick={discardRecording} disabled={isTranscribing} className="flex-1 rounded-full bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
                       Discard
                     </button>
                   </div>
 
+                  {isTranscribing && (
+                    <p className="w-full rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
+                      Processing audio with Google Speech-to-Text...
+                    </p>
+                  )}
+
                   <div className="w-full rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
                     <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Live Transcription</p>
                     <p className="text-sm italic leading-relaxed text-slate-500 dark:text-slate-400">
-                      {transcript || '"Today was surprisingly productive despite the rainy weather..."'}
+                      {transcript || '"Tap Start, allow microphone access, and begin speaking..."'}
                     </p>
                   </div>
                 </div>
