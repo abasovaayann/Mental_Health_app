@@ -25,6 +25,7 @@ const CALENDAR_VISIBLE_ENTRIES_LIMIT = 6;
 const VOICE_LANGUAGES = [
   { value: 'en-US', label: 'English' },
   { value: 'ru-RU', label: 'Russian' },
+  { value: 'tr-TR', label: 'Turkish' },
 ];
 
 const formatDateInput = (date) => {
@@ -159,24 +160,25 @@ const Diary = () => {
   const [draftState, setDraftState] = useState('idle');
   const [saveState, setSaveState] = useState('idle');
   const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [transcript, setTranscript] = useState('');
   const [voiceLanguage, setVoiceLanguage] = useState('en-US');
   const [recordingError, setRecordingError] = useState('');
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [savedVoiceNote, setSavedVoiceNote] = useState(false);
+  const [recordingStatus, setRecordingStatus] = useState('Ready');
+  const [interimTranscript, setInterimTranscript] = useState('');
   const [sameDayModalOpen, setSameDayModalOpen] = useState(false);
   const [recentEntriesModalOpen, setRecentEntriesModalOpen] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const mediaStreamRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const shouldTranscribeRef = useRef(true);
+  const recognitionRef = useRef(null);
+  const isRecordingRef = useRef(false);
+  const timerRef = useRef(null);
 
   const speechSupported = useMemo(() => {
     if (typeof window === 'undefined') {
       return false;
     }
-    return Boolean(window.MediaRecorder && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    return Boolean(SpeechRecognition);
   }, []);
 
   useEffect(() => {
@@ -306,30 +308,17 @@ const Diary = () => {
     return () => clearTimeout(timeout);
   }, [isEditorPage, selectedDate, title, content, selectedMood, tags]);
 
-  useEffect(() => {
-    if (!isRecording) {
-      return undefined;
-    }
-
-    const interval = setInterval(() => {
-      setRecordSeconds((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isRecording]);
-
+  // Cleanup recognition on unmount
   useEffect(() => {
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch (error) {
-          // Ignore cleanup errors when recorder already stopped.
-        }
+      if (recognitionRef.current) {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.abort();
       }
-
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
       }
     };
   }, []);
@@ -502,137 +491,177 @@ const Diary = () => {
     setTags((prev) => prev.filter((tag) => tag !== value));
   };
 
-  const startRecording = async () => {
-    if (!speechSupported || isRecording) {
+  /* ---------- Helper: start the mm:ss timer ---------- */
+  const startTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    timerRef.current = setInterval(() => {
+      setRecordSeconds((prev) => prev + 1);
+    }, 1000);
+  };
+
+  /* ---------- Helper: stop the mm:ss timer ---------- */
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  /* ---------- Helper: create and wire up a SpeechRecognition instance ---------- */
+  const initRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = voiceLanguage;
+
+    recognition.onstart = () => {};
+
+    recognition.onresult = (event) => {
+      let interim = '';
+      let finalText = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const text = event.results[i][0].transcript;
+        const isFinal = event.results[i].isFinal;
+        if (isFinal) {
+          finalText += text + ' ';
+        } else {
+          interim += text;
+        }
+      }
+
+      if (finalText) {
+        setTranscript((prev) => prev + finalText);
+      }
+      setInterimTranscript(interim);
+    };
+
+    recognition.onerror = (event) => {
+      // 'aborted' fires naturally when recognition.abort() is called (e.g. on discard) — not a real error
+      if (event.error === 'aborted') {
+        return;
+      }
+      setRecordingError(`Speech error: ${event.error}`);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        stopTimer();
+        isRecordingRef.current = false;
+        setIsRecording(false);
+        setIsPaused(false);
+        setRecordingStatus('Ready');
+      }
+    };
+
+    // Auto-restart only when still actively recording (not paused/stopped/discarded)
+    recognition.onend = () => {
+      if (isRecordingRef.current) {
+        recognition.start();
+      }
+    };
+
+    recognitionRef.current = recognition;
+  };
+
+  /* ---------- Start recording (Web Speech API) ---------- */
+  const startRecording = () => {
+    if (!speechSupported || isRecordingRef.current) {
       return;
     }
 
     setRecordingError('');
-    setRecordSeconds(0);
-    setTranscript('');
-    audioChunksRef.current = [];
-    shouldTranscribeRef.current = true;
-    setSavedVoiceNote(false);
+    setRecordingStatus('Listening...');
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = recorder;
+    // Brand new session (not resuming from pause): clear old transcript
+    if (!isPaused) {
+      setTranscript('');
+      setInterimTranscript('');
+      setRecordSeconds(0);
+      initRecognition();
+    }
 
-      recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
+    isRecordingRef.current = true;
+    setIsRecording(true);
+    setIsPaused(false);
 
-      recorder.onerror = () => {
-        setRecordingError('Audio recording failed. Please try again.');
-        setIsRecording(false);
-      };
-
-      recorder.onstop = async () => {
-        setIsRecording(false);
-
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-          mediaStreamRef.current = null;
-        }
-
-        if (!shouldTranscribeRef.current) {
-          audioChunksRef.current = [];
-          return;
-        }
-
-        if (!audioChunksRef.current.length) {
-          setRecordingError('No audio captured. Please try again.');
-          return;
-        }
-
-        setIsTranscribing(true);
-
-        try {
-          const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-          const formData = new FormData();
-          formData.append('audio_file', blob, 'voice-note.webm');
-          formData.append('language_code', voiceLanguage);
-
-          const response = await api.post('/diary/speech-to-text', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-
-          const transcribedText = (response.data?.transcript || '').trim();
-          setTranscript(transcribedText);
-
-          if (transcribedText) {
-            setSavedVoiceNote(true);
-            setContent((prev) => {
-              if (!prev.trim()) {
-                return transcribedText;
-              }
-              if (prev.includes(transcribedText)) {
-                return prev;
-              }
-              return `${prev.trim()}\n\nVoice note: ${transcribedText}`;
-            });
-          } else {
-            setRecordingError('No speech recognized. Try speaking louder or recording longer.');
-          }
-        } catch (error) {
-          const detail = error.response?.data?.detail;
-          setRecordingError(typeof detail === 'string' ? detail : 'Transcription failed. Please try again.');
-        } finally {
-          setIsTranscribing(false);
-          audioChunksRef.current = [];
-        }
-      };
-
-      recorder.start();
-      setIsRecording(true);
-    } catch (error) {
-      setRecordingError('Microphone permission is required to use voice diary.');
-      setIsRecording(false);
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-        mediaStreamRef.current = null;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+      } catch (error) {
+        // If restarting the same instance fails, create a new one
+        initRecognition();
+        recognitionRef.current.start();
       }
+    }
+
+    startTimer();
+  };
+
+  /* ---------- Pause recording ---------- */
+  const pauseRecording = () => {
+    if (!recognitionRef.current || !isRecordingRef.current) {
       return;
     }
 
-    setTranscript('');
+    isRecordingRef.current = false;
+    setIsPaused(true);
+    setRecordingStatus('Paused');
+    setInterimTranscript('');
+
+    recognitionRef.current.stop();
+    stopTimer();
   };
 
+  /* ---------- Resume recording (delegates to startRecording) ---------- */
+  const resumeRecording = () => {
+    startRecording();
+  };
+
+  /* ---------- Stop and save (append to diary content) ---------- */
   const stopAndSaveRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (error) {
-        // Ignore stop errors if recorder is already stopped.
-      }
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.stop();
     }
+
+    isRecordingRef.current = false;
     setIsRecording(false);
+    setIsPaused(false);
+    setInterimTranscript('');
+    setRecordingStatus('Saved');
+    stopTimer();
+
+    // Append final transcript to diary content
+    setTranscript((currentTranscript) => {
+      const finalVoiceNote = currentTranscript.trim();
+      if (finalVoiceNote) {
+        setContent((prev) =>
+          prev.trim()
+            ? `${prev.trim()}\n\nVoice note: ${finalVoiceNote}`
+            : `Voice note: ${finalVoiceNote}`
+        );
+      }
+      return currentTranscript;
+    });
   };
 
+  /* ---------- Discard recording ---------- */
   const discardRecording = () => {
-    shouldTranscribeRef.current = false;
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (error) {
-        // Ignore stop errors if recorder is already stopped.
-      }
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = null;
+      recognitionRef.current.abort();
     }
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
+
+    isRecordingRef.current = false;
     setIsRecording(false);
-    setIsTranscribing(false);
-    setRecordSeconds(0);
+    setIsPaused(false);
     setTranscript('');
-    audioChunksRef.current = [];
+    setInterimTranscript('');
+    setRecordingStatus('Ready');
     setRecordingError('');
-    setSavedVoiceNote(false);
+    setRecordSeconds(0);
+    stopTimer();
   };
 
   const shiftMonth = (value) => {
@@ -693,9 +722,8 @@ const Diary = () => {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col justify-between bg-blue-900 px-6 py-6 text-white shadow-2xl transition-transform duration-200 lg:static lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } overflow-y-auto`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col justify-between bg-blue-900 px-6 py-6 text-white shadow-2xl transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } overflow-y-auto`}
       >
         <div className="flex flex-col gap-8">
           <div className="flex items-center gap-3">
@@ -714,13 +742,12 @@ const Diary = () => {
                     setSidebarOpen(false);
                   }
                 }}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${
-                  item.active
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${item.active
                     ? 'bg-blue-500/30 text-white'
                     : item.path
                       ? 'text-blue-100 hover:bg-white/10'
                       : 'cursor-not-allowed text-blue-200/60'
-                }`}
+                  }`}
               >
                 <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                 <span className="text-sm font-medium">{item.label}</span>
@@ -808,8 +835,7 @@ const Diary = () => {
                             }
                             navigate(`/diary/entry/${cellDate}`);
                           }}
-                          className={`relative aspect-square rounded-2xl transition-colors ${
-                            item.currentMonth
+                          className={`relative aspect-square rounded-2xl transition-colors ${item.currentMonth
                               ? isFuture
                                 ? 'cursor-not-allowed bg-slate-100 text-slate-400 dark:bg-slate-900 dark:text-slate-600'
                                 : mood
@@ -818,7 +844,7 @@ const Diary = () => {
                                     ? 'bg-primary font-bold text-white shadow-lg shadow-primary/20'
                                     : 'bg-slate-50 text-slate-700 hover:bg-primary/10 dark:bg-slate-800 dark:text-slate-200'
                               : 'cursor-not-allowed text-slate-400 dark:text-slate-600'
-                          }`}
+                            }`}
                         >
                           {item.day}
                         </button>
@@ -905,363 +931,378 @@ const Diary = () => {
 
           {isEditorPage && (
             <div className="grid grid-cols-1 gap-6 xl:min-h-[calc(100vh-10rem)] xl:grid-cols-12 xl:items-stretch">
-            <section className="xl:col-span-8 flex flex-col gap-6 xl:h-full">
-              <div className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm dark:border-border-dark dark:bg-surface-dark">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
-                  <span className="material-symbols-outlined text-amber-500">lightbulb</span>
-                </div>
-                <div className="flex-1">
-                  <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Daily Prompt</p>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{dailyPrompt}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const currentIndex = DAILY_PROMPTS.indexOf(dailyPrompt);
-                    const nextIndex = (currentIndex + 1) % DAILY_PROMPTS.length;
-                    setDailyPrompt(DAILY_PROMPTS[nextIndex]);
-                  }}
-                  className="text-slate-400 transition-colors hover:text-slate-600"
-                >
-                  <span className="material-symbols-outlined text-lg">refresh</span>
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-6 rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark sm:p-8 xl:flex-1">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start">
+              <section className="xl:col-span-8 flex flex-col gap-6 xl:h-full">
+                <div className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm dark:border-border-dark dark:bg-surface-dark">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
+                    <span className="material-symbols-outlined text-amber-500">lightbulb</span>
+                  </div>
                   <div className="flex-1">
-                    <input
-                      className="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 dark:bg-slate-800/50 dark:text-white"
-                      placeholder="Title your reflection..."
-                      type="text"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
+                    <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-500">Daily Prompt</p>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{dailyPrompt}</p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    <span className="rounded-xl bg-blue-50 px-3 py-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
-                      {editingEntryId
-                        ? 'Editing entry'
-                        : draftState === 'saving'
-                          ? 'Saving draft...'
-                          : draftState === 'saved'
-                            ? 'Draft saved'
-                            : 'Draft idle'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-                  {['positive', 'neutral', 'negative'].map((mood) => (
-                    <button
-                      key={mood}
-                      type="button"
-                      onClick={() => setSelectedMood(mood)}
-                      className={`rounded-2xl border px-4 py-4 text-left transition-colors dark:border-slate-700 dark:bg-slate-800/50 ${
-                        selectedMood === mood
-                          ? `ring-2 ${moodMeta[mood].soft} border-transparent bg-white`
-                          : 'border-slate-200 bg-slate-50 hover:border-primary/40'
-                      }`}
-                    >
-                      <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">Mood</p>
-                      <p className="text-sm font-semibold text-slate-800 dark:text-white">{moodMeta[mood].label}</p>
-                    </button>
-                  ))}
-                  <button type="button" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-primary/40 dark:border-slate-700 dark:bg-slate-800/50">
-                    <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">Weather of mind</p>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Mostly clear</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentIndex = DAILY_PROMPTS.indexOf(dailyPrompt);
+                      const nextIndex = (currentIndex + 1) % DAILY_PROMPTS.length;
+                      setDailyPrompt(DAILY_PROMPTS[nextIndex]);
+                    }}
+                    className="text-slate-400 transition-colors hover:text-slate-600"
+                  >
+                    <span className="material-symbols-outlined text-lg">refresh</span>
                   </button>
                 </div>
 
-                <textarea
-                  className="min-h-[420px] w-full resize-none rounded-2xl border-none bg-slate-50 px-6 py-6 text-base leading-relaxed text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 dark:bg-slate-800/50 dark:text-white"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write your reflection here..."
-                />
-
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                      >
-                        {tag}
-                        <button type="button" onClick={() => removeTag(tag)} className="material-symbols-outlined text-xs">close</button>
+                <div className="flex flex-col gap-6 rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark sm:p-8 xl:flex-1">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start">
+                    <div className="flex-1">
+                      <input
+                        className="w-full rounded-2xl border-none bg-slate-50 px-5 py-4 text-xl font-bold text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 dark:bg-slate-800/50 dark:text-white"
+                        placeholder="Title your reflection..."
+                        type="text"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                      <span className="rounded-xl bg-blue-50 px-3 py-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                        {editingEntryId
+                          ? 'Editing entry'
+                          : draftState === 'saving'
+                            ? 'Saving draft...'
+                            : draftState === 'saved'
+                              ? 'Draft saved'
+                              : 'Draft idle'}
                       </span>
-                    ))}
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="text"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addTag(tagInput);
-                        }
-                      }}
-                      placeholder="+ Add tag"
-                      className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-primary focus:ring-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                    />
-                    <button type="button" onClick={() => addTag(tagInput)} className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/20">
-                      Add
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                    {['positive', 'neutral', 'negative'].map((mood) => (
+                      <button
+                        key={mood}
+                        type="button"
+                        onClick={() => setSelectedMood(mood)}
+                        className={`rounded-2xl border px-4 py-4 text-left transition-colors dark:border-slate-700 dark:bg-slate-800/50 ${selectedMood === mood
+                            ? `ring-2 ${moodMeta[mood].soft} border-transparent bg-white`
+                            : 'border-slate-200 bg-slate-50 hover:border-primary/40'
+                          }`}
+                      >
+                        <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">Mood</p>
+                        <p className="text-sm font-semibold text-slate-800 dark:text-white">{moodMeta[mood].label}</p>
+                      </button>
+                    ))}
+                    <button type="button" className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-primary/40 dark:border-slate-700 dark:bg-slate-800/50">
+                      <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-slate-400">Weather of mind</p>
+                      <p className="text-sm font-semibold text-slate-800 dark:text-white">Mostly clear</p>
                     </button>
+                  </div>
+
+                  <textarea
+                    id="diaryContent"
+                    className="min-h-[420px] w-full resize-none rounded-2xl border-none bg-slate-50 px-6 py-6 text-base leading-relaxed text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 dark:bg-slate-800/50 dark:text-white"
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Write your reflection here..."
+                  />
+
+                  <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap gap-2">
-                      {tagSuggestions.map((suggestion) => (
-                        <button
-                          key={suggestion}
-                          type="button"
-                          onClick={() => addTag(suggestion)}
-                          className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] text-slate-500 transition-colors hover:border-primary/40 dark:border-slate-700 dark:text-slate-400"
+                      {tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         >
-                          {`#${suggestion}`}
-                        </button>
+                          {tag}
+                          <button type="button" onClick={() => removeTag(tag)} className="material-symbols-outlined text-xs">close</button>
+                        </span>
                       ))}
                     </div>
-                  </div>
-                </div>
 
-                <div className="flex flex-col gap-4 border-t border-slate-100 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap items-center gap-5 text-xs text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">format_align_left</span>
-                      <span className="font-medium">{wordsCount} words</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-base">schedule</span>
-                      <span className="font-medium">~{readMinutes} min read</span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        type="text"
+                        value={tagInput}
+                        onChange={(e) => setTagInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addTag(tagInput);
+                          }
+                        }}
+                        placeholder="+ Add tag"
+                        className="w-40 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 focus:border-primary focus:ring-0 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                      />
+                      <button type="button" onClick={() => addTag(tagInput)} className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/20">
+                        Add
+                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        {tagSuggestions.map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            type="button"
+                            onClick={() => addTag(suggestion)}
+                            className="rounded-lg border border-slate-200 px-2 py-1 text-[11px] text-slate-500 transition-colors hover:border-primary/40 dark:border-slate-700 dark:text-slate-400"
+                          >
+                            {`#${suggestion}`}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-3">
-                    {editingEntryId && (
+
+                  <div className="flex flex-col gap-4 border-t border-slate-100 pt-6 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-wrap items-center gap-5 text-xs text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">format_align_left</span>
+                        <span className="font-medium">{wordsCount} words</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-base">schedule</span>
+                        <span className="font-medium">~{readMinutes} min read</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      {editingEntryId && (
+                        <button
+                          type="button"
+                          onClick={removeCurrentEditingEntry}
+                          className="rounded-xl border border-rose-200 px-6 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                        >
+                          Delete Entry
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={removeCurrentEditingEntry}
-                        className="rounded-xl border border-rose-200 px-6 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                        onClick={() => {
+                          setEditingEntryId(null);
+                          setTitle('');
+                          setContent('');
+                          setTags(['#reflection']);
+                          discardRecording();
+                        }}
+                        className="rounded-xl border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                       >
-                        Delete Entry
+                        Clear
                       </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setEditingEntryId(null);
-                        setTitle('');
-                        setContent('');
-                        setTags(['#reflection']);
-                        discardRecording();
-                      }}
-                      className="rounded-xl border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                    >
-                      Clear
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSaveDisabled}
-                      onClick={saveEntry}
-                      className="rounded-xl bg-primary px-8 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {saveState === 'success' ? 'Saved ✓' : editingEntryId ? 'Update Entry' : 'Save Entry'}
-                    </button>
+                      <button
+                        type="button"
+                        disabled={isSaveDisabled}
+                        onClick={saveEntry}
+                        className="rounded-xl bg-primary px-8 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {saveState === 'success' ? 'Saved ✓' : editingEntryId ? 'Update Entry' : 'Save Entry'}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
-
-            <aside className="xl:col-span-4 flex flex-col gap-6 xl:h-full xl:justify-between">
-              <div className="rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark">
-                <div className="mb-6 flex items-center justify-between">
-                  <p className="font-display text-lg font-bold text-slate-800 dark:text-white">Voice Diary</p>
-                  <div className="flex items-center gap-2">
-                    {isRecording && <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />}
-                    <span className={`text-xs font-bold uppercase tracking-wide ${isRecording ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}>
-                      {isRecording ? 'Recording' : savedVoiceNote ? 'Saved' : 'Ready'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center gap-6 py-2">
-                  <button
-                    type="button"
-                    onClick={isRecording ? stopAndSaveRecording : startRecording}
-                    className="relative"
-                  >
-                    {isRecording && <span className="absolute -inset-4 rounded-full bg-primary/10 animate-ping opacity-25" />}
-                    <span className="relative flex h-20 w-20 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/30">
-                      <span className="material-symbols-outlined text-4xl">mic</span>
-                    </span>
-                  </button>
-
-                  <div className="text-center">
-                    <p className="text-3xl font-mono font-bold text-slate-800 dark:text-white">{formatDuration(recordSeconds)}</p>
-                    <p className="mt-1 text-sm text-slate-400">Tap to {isRecording ? 'stop' : 'start'} recording</p>
-                  </div>
-
-                  <div className="w-full">
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Recognition language</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {VOICE_LANGUAGES.map((lang) => (
-                        <button
-                          key={lang.value}
-                          type="button"
-                          disabled={isRecording}
-                          onClick={() => setVoiceLanguage(lang.value)}
-                          className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${
-                            voiceLanguage === lang.value
-                              ? 'border-primary bg-primary/10 text-primary'
-                              : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
-                          } disabled:cursor-not-allowed disabled:opacity-60`}
-                        >
-                          {lang.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {!speechSupported && (
-                    <p className="w-full rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
-                      Audio recording is not supported in this browser. Try Chrome or Edge.
-                    </p>
-                  )}
-
-                  {recordingError && (
-                    <p className="w-full rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
-                      {recordingError}
-                    </p>
-                  )}
-
-                  <div className="flex w-full gap-3">
-                    <button type="button" onClick={startRecording} disabled={isRecording || isTranscribing || !speechSupported} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
-                      Start
-                    </button>
-                    <button type="button" onClick={stopAndSaveRecording} disabled={!isRecording} className="flex-1 rounded-full bg-primary px-4 py-3 text-sm font-bold text-white disabled:opacity-50">
-                      Stop &amp; Save
-                    </button>
-                    <button type="button" onClick={discardRecording} disabled={isTranscribing} className="flex-1 rounded-full bg-slate-100 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
-                      Discard
-                    </button>
-                  </div>
-
-                  {isTranscribing && (
-                    <p className="w-full rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                      Processing audio with Google Speech-to-Text...
-                    </p>
-                  )}
-
-                  <div className="w-full rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
-                    <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Live Transcription</p>
-                    <p className="text-sm italic leading-relaxed text-slate-500 dark:text-slate-400">
-                      {transcript || '"Tap Start, allow microphone access, and begin speaking..."'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <article className="rounded-3xl border border-blue-100 bg-blue-50/70 p-5 shadow-sm transition-all hover:shadow-md dark:border-blue-900/50 dark:bg-blue-950/20">
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-display text-base font-bold text-slate-800 dark:text-white">AI Analysis</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Emotion detection from your writing + voice</p>
-                    </div>
-                    <span className="material-symbols-outlined text-blue-500">neurology</span>
-                  </div>
-
-                  <div className="mb-3 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-sm dark:bg-slate-900/50">
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">Detected mood</span>
-                    <span className="font-bold text-slate-800 dark:text-white">{aiMoodData.mood}</span>
-                  </div>
-
-                  <div className="mb-3 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-sm dark:bg-slate-900/50">
-                    <span className="font-semibold text-slate-600 dark:text-slate-300">Confidence</span>
-                    <span className="font-bold text-blue-700 dark:text-blue-300">{aiConfidence}%</span>
-                  </div>
-
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{aiMoodData.insight}</p>
-                </article>
-
-                <article className="rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-display text-base font-bold text-slate-800 dark:text-white">Daily Summary</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Quick snapshot for today</p>
-                    </div>
-                    <span className="material-symbols-outlined text-slate-400">monitoring</span>
-                  </div>
-
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Mood</span>
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">{moodMeta[selectedMood].label}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Energy level</span>
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">{energyLevel}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Main theme</span>
-                      <span className="font-semibold text-right text-slate-700 dark:text-slate-200">{mainTheme}</span>
-                    </div>
-                    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                      <span className="text-slate-500 dark:text-slate-400">Word count</span>
-                      <span className="font-semibold text-slate-700 dark:text-slate-200">{wordsCount}</span>
-                    </div>
-                  </div>
-                </article>
-
-                <article className="md:col-span-2 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-display text-base font-bold text-slate-800 dark:text-white">Suggestions</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Gentle actions based on today&apos;s emotional pattern</p>
-                    </div>
-                    <span className="material-symbols-outlined text-amber-500">tips_and_updates</span>
-                  </div>
-
-                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                    {aiMoodData.suggestions.slice(0, 3).map((item) => (
-                      <li key={item} className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                        <span className="mt-[2px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-
-                <article className="md:col-span-2 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
-                  <div className="mb-4 flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-display text-base font-bold text-slate-800 dark:text-white">Same Day Entries</p>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Entries saved for {formatReadableDate(selectedDate)}</p>
-                    </div>
-                    <span className="material-symbols-outlined text-slate-400">history_edu</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setSameDayModalOpen(true)}
-                    className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left transition-colors hover:border-primary/40 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-semibold text-slate-800 dark:text-white">View saved entries for this day</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {selectedDayEntries.length
-                            ? `${selectedDayEntries.length} entr${selectedDayEntries.length === 1 ? 'y' : 'ies'} saved`
-                            : 'No entries saved yet'}
-                        </p>
-                      </div>
-                      <span className="material-symbols-outlined text-slate-400">open_in_new</span>
-                    </div>
-                  </button>
-                </article>
               </section>
-            </aside>
-          </div>
+
+              <aside className="xl:col-span-4 flex flex-col gap-6 xl:h-full xl:justify-between">
+                <div className="rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark">
+                  <div className="mb-6 flex items-center justify-between">
+                    <p className="font-display text-lg font-bold text-slate-800 dark:text-white">Voice Diary</p>
+                    <div className="flex items-center gap-2">
+                      {isRecording && !isPaused && <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />}
+                      {isPaused && <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />}
+                      <span
+                        id="recordingStatus"
+                        className={`text-xs font-bold uppercase tracking-wide ${isPaused ? 'text-amber-500' : isRecording ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
+                      >
+                        {recordingStatus}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-6 py-2">
+                    <button
+                      type="button"
+                      onClick={isRecording ? (isPaused ? resumeRecording : stopAndSaveRecording) : startRecording}
+                      disabled={!speechSupported}
+                      className="relative disabled:opacity-50"
+                    >
+                      {isRecording && !isPaused && <span className="absolute -inset-4 rounded-full bg-primary/10 animate-ping opacity-25" />}
+                      <span className={`relative flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl ${isPaused ? 'bg-amber-500 shadow-amber-500/30' : 'bg-primary shadow-primary/30'}`}>
+                        <span className="material-symbols-outlined text-4xl">{isPaused ? 'play_arrow' : 'mic'}</span>
+                      </span>
+                    </button>
+
+                    <div className="text-center">
+                      <p id="recordingTimer" className="text-3xl font-mono font-bold text-slate-800 dark:text-white">{formatDuration(recordSeconds)}</p>
+                      <p className="mt-1 text-sm text-slate-400">
+                        {isPaused ? 'Paused — tap to resume' : isRecording ? 'Tap to stop' : 'Tap to start recording'}
+                      </p>
+                    </div>
+
+                    <div className="w-full">
+                      <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Recognition language</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {VOICE_LANGUAGES.map((lang) => (
+                          <button
+                            key={lang.value}
+                            type="button"
+                            disabled={isRecording}
+                            onClick={() => setVoiceLanguage(lang.value)}
+                            className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-colors ${voiceLanguage === lang.value
+                                ? 'border-primary bg-primary/10 text-primary'
+                                : 'border-slate-200 bg-white text-slate-600 hover:border-primary/40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'
+                              } disabled:cursor-not-allowed disabled:opacity-60`}
+                          >
+                            {lang.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {!speechSupported && (
+                      <p className="w-full rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+                        Speech recognition not supported in this browser
+                      </p>
+                    )}
+
+                    {recordingError && (
+                      <p
+                        id="recordingError"
+                        className="w-full rounded-xl bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:bg-rose-900/20 dark:text-rose-300"
+                      >
+                        {recordingError}
+                      </p>
+                    )}
+
+                    <div className="flex w-full gap-2">
+                      <button id="startRecording" type="button" onClick={isPaused ? resumeRecording : startRecording} disabled={(isRecording && !isPaused) || !speechSupported} className="flex-1 rounded-full bg-primary px-3 py-3 text-sm font-bold text-white disabled:opacity-50">
+                        {isPaused ? 'Resume' : 'Start'}
+                      </button>
+                      <button id="pauseRecording" type="button" onClick={isPaused ? resumeRecording : pauseRecording} disabled={!isRecording} className={`flex-1 rounded-full px-3 py-3 text-sm font-bold disabled:opacity-50 ${isPaused ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300'}`}>
+                        {isPaused ? 'Resume' : 'Pause'}
+                      </button>
+                      <button id="stopRecording" type="button" onClick={stopAndSaveRecording} disabled={!isRecording} className="flex-1 rounded-full bg-primary px-3 py-3 text-sm font-bold text-white disabled:opacity-50">
+                        Save
+                      </button>
+                      <button id="discardRecording" type="button" onClick={discardRecording} disabled={!isRecording && !transcript} className="flex-1 rounded-full bg-slate-100 px-3 py-3 text-sm font-bold text-slate-600 transition-colors hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700">
+                        Discard
+                      </button>
+                    </div>
+
+                    <div id="liveTranscript" className="w-full rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                      <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Live Transcription</p>
+                      <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                        {transcript || interimTranscript ? (
+                          <>
+                            <span>{transcript}</span>
+                            {interimTranscript && (
+                              <span className="italic text-slate-400 dark:text-slate-500">{interimTranscript}</span>
+                            )}
+                          </>
+                        ) : (
+                          <span className="italic">Tap Start, allow microphone access, and begin speaking.</span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <article className="rounded-3xl border border-blue-100 bg-blue-50/70 p-5 shadow-sm transition-all hover:shadow-md dark:border-blue-900/50 dark:bg-blue-950/20">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">AI Analysis</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Emotion detection from your writing + voice</p>
+                      </div>
+                      <span className="material-symbols-outlined text-blue-500">neurology</span>
+                    </div>
+
+                    <div className="mb-3 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-sm dark:bg-slate-900/50">
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">Detected mood</span>
+                      <span className="font-bold text-slate-800 dark:text-white">{aiMoodData.mood}</span>
+                    </div>
+
+                    <div className="mb-3 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-sm dark:bg-slate-900/50">
+                      <span className="font-semibold text-slate-600 dark:text-slate-300">Confidence</span>
+                      <span className="font-bold text-blue-700 dark:text-blue-300">{aiConfidence}%</span>
+                    </div>
+
+                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{aiMoodData.insight}</p>
+                  </article>
+
+                  <article className="rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">Daily Summary</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Quick snapshot for today</p>
+                      </div>
+                      <span className="material-symbols-outlined text-slate-400">monitoring</span>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400">Mood</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{moodMeta[selectedMood].label}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400">Energy level</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{energyLevel}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400">Main theme</span>
+                        <span className="font-semibold text-right text-slate-700 dark:text-slate-200">{mainTheme}</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+                        <span className="text-slate-500 dark:text-slate-400">Word count</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-200">{wordsCount}</span>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article className="md:col-span-2 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">Suggestions</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Gentle actions based on today&apos;s emotional pattern</p>
+                      </div>
+                      <span className="material-symbols-outlined text-amber-500">tips_and_updates</span>
+                    </div>
+
+                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                      {aiMoodData.suggestions.slice(0, 3).map((item) => (
+                        <li key={item} className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
+                          <span className="mt-[2px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+
+                  <article className="md:col-span-2 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">Same Day Entries</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Entries saved for {formatReadableDate(selectedDate)}</p>
+                      </div>
+                      <span className="material-symbols-outlined text-slate-400">history_edu</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSameDayModalOpen(true)}
+                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left transition-colors hover:border-primary/40 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-800 dark:text-white">View saved entries for this day</p>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {selectedDayEntries.length
+                              ? `${selectedDayEntries.length} entr${selectedDayEntries.length === 1 ? 'y' : 'ies'} saved`
+                              : 'No entries saved yet'}
+                          </p>
+                        </div>
+                        <span className="material-symbols-outlined text-slate-400">open_in_new</span>
+                      </div>
+                    </button>
+                  </article>
+                </section>
+              </aside>
+            </div>
           )}
         </div>
       </main>
