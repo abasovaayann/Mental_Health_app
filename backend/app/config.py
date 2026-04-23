@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     # API
     API_V1_PREFIX: str = "/api"
     PROJECT_NAME: str = "MindTrackAi"
+    WHISPER_MODEL: str = "base"
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
