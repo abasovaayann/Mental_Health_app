@@ -4,6 +4,7 @@ from sqlalchemy import text
 from app.config import settings
 from app.api.router import api_router
 from app.database import engine, Base
+import app.models  # noqa: F401 — registers all models with Base before create_all
 
 # Create database tables
 Base.metadata.create_all(bind=engine)

@@ -6,6 +6,7 @@ import { DASHBOARD_QUOTES } from '../data/quotes';
 const navItems = [
   { key: 'home', label: 'Home', icon: 'home', path: '/dashboard' },
   { key: 'diary', label: 'Diary', icon: 'book_2', path: '/diary' },
+  { key: 'chatbot', label: 'AI Chat', icon: 'chat_bubble', path: '/chatbot' },
   { key: 'analytics', label: 'Analytics', icon: 'analytics', disabled: true },
   { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings' },
 ];
