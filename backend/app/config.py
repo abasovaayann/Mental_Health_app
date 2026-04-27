@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api"
     PROJECT_NAME: str = "MindTrackAi"
     WHISPER_MODEL: str = "base"
+    GEMINI_API_KEY: str = ""
+    DEEPGRAM_API_KEY: str = ""  # optional — set to use Deepgram instead of local Whisper
     
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
