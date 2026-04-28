@@ -1,25 +1,10 @@
 from fastapi import APIRouter
-from app.api.routes import auth, survey, diary
+from app.api.routes import auth, survey, diary, chatbot, ai_diary
 
 api_router = APIRouter()
 
-# Include authentication routes
-api_router.include_router(
-    auth.router,
-    prefix="/auth",
-    tags=["authentication"]
-)
-
-# Include survey routes
-api_router.include_router(
-    survey.router,
-    prefix="/survey",
-    tags=["survey"]
-)
-
-# Include diary routes
-api_router.include_router(
-    diary.router,
-    prefix="/diary",
-    tags=["diary"]
-)
+api_router.include_router(auth.router, prefix="/auth", tags=["authentication"])
+api_router.include_router(survey.router, prefix="/survey", tags=["survey"])
+api_router.include_router(diary.router, prefix="/diary", tags=["diary"])
+api_router.include_router(chatbot.router, prefix="/chatbot", tags=["chatbot"])
+api_router.include_router(ai_diary.router, prefix="/ai-diary", tags=["ai-diary"])

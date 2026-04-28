@@ -1,7 +1,11 @@
+import asyncio
+import os
+import tempfile
 from datetime import datetime
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.models.diary import DiaryEntry
 from app.models.user import User
@@ -15,6 +19,70 @@ from app.schemas.diary import (
 from app.utils.dependencies import get_current_user
 
 router = APIRouter()
+_whisper_model = None
+_whisper_model_name = None
+
+
+def _get_whisper_model():
+    global _whisper_model, _whisper_model_name
+
+    if _whisper_model is not None and _whisper_model_name == settings.WHISPER_MODEL:
+        return _whisper_model
+
+    try:
+        import whisper
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Whisper is not installed. Install backend requirements and restart the server.",
+        ) from exc
+
+    _whisper_model = whisper.load_model(settings.WHISPER_MODEL)
+    _whisper_model_name = settings.WHISPER_MODEL
+    return _whisper_model
+
+
+def _audio_suffix(filename: str | None, content_type: str | None) -> str:
+    if filename and "." in filename:
+        return os.path.splitext(filename)[1]
+
+    content_type = (content_type or "").lower()
+    if "ogg" in content_type:
+        return ".ogg"
+    if "wav" in content_type or "wave" in content_type:
+        return ".wav"
+    if "mp4" in content_type:
+        return ".mp4"
+    return ".webm"
+
+
+def _ensure_ffmpeg_on_path():
+    try:
+        import imageio_ffmpeg
+    except Exception:
+        return
+
+    ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+    ffmpeg_dir = os.path.dirname(ffmpeg_path)
+    path_parts = os.environ.get("PATH", "").split(os.pathsep)
+    if ffmpeg_dir not in path_parts:
+        os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
+
+
+def _transcribe_audio(path: str, language_code: str) -> str:
+    language_map = {
+        "en-US": "en",
+        "ru-RU": "ru",
+        "tr-TR": "tr",
+    }
+    _ensure_ffmpeg_on_path()
+    model = _get_whisper_model()
+    result = model.transcribe(
+        path,
+        language=language_map.get(language_code),
+        fp16=False,
+    )
+    return (result.get("text") or "").strip()
 
 
 def _serialize_tags(csv_value: str) -> list[str]:
@@ -152,7 +220,7 @@ async def speech_to_text(
 ):
     del current_user
 
-    allowed_languages = {"en-US", "ru-RU"}
+    allowed_languages = {"en-US", "ru-RU", "tr-TR"}
     if language_code not in allowed_languages:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported language")
 
@@ -160,57 +228,26 @@ async def speech_to_text(
     if not raw_audio:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Audio file is empty")
 
-    max_audio_bytes = 10 * 1024 * 1024
+    max_audio_bytes = 25 * 1024 * 1024
     if len(raw_audio) > max_audio_bytes:
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Audio file is too large")
 
+    temp_path = None
     try:
-        from google.cloud import speech
-        from google.auth.exceptions import DefaultCredentialsError
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Google Speech dependency is not installed",
-        ) from exc
+        suffix = _audio_suffix(audio_file.filename, audio_file.content_type)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+            temp_file.write(raw_audio)
+            temp_path = temp_file.name
 
-    content_type = (audio_file.content_type or "").lower()
-    encoding = speech.RecognitionConfig.AudioEncoding.ENCODING_UNSPECIFIED
-    if "webm" in content_type:
-        encoding = speech.RecognitionConfig.AudioEncoding.WEBM_OPUS
-    elif "ogg" in content_type:
-        encoding = speech.RecognitionConfig.AudioEncoding.OGG_OPUS
-    elif "wav" in content_type or "wave" in content_type:
-        encoding = speech.RecognitionConfig.AudioEncoding.LINEAR16
-
-    config = speech.RecognitionConfig(
-        encoding=encoding,
-        language_code=language_code,
-        enable_automatic_punctuation=True,
-        model="latest_long",
-    )
-    audio = speech.RecognitionAudio(content=raw_audio)
-
-    try:
-        client = speech.SpeechClient()
-        response = client.recognize(config=config, audio=audio)
-    except DefaultCredentialsError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "Google credentials are missing. Set GOOGLE_APPLICATION_CREDENTIALS "
-                "to your service-account JSON path and restart backend."
-            ),
-        ) from exc
+        transcript = await asyncio.to_thread(_transcribe_audio, temp_path, language_code)
+        return {"transcript": transcript}
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Speech recognition request failed",
+            detail="Whisper speech recognition failed. Check that ffmpeg is installed and the audio format is supported.",
         ) from exc
-
-    transcript_parts = []
-    for result in response.results:
-        if result.alternatives:
-            transcript_parts.append(result.alternatives[0].transcript.strip())
-
-    transcript = " ".join(part for part in transcript_parts if part).strip()
-    return {"transcript": transcript}
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
