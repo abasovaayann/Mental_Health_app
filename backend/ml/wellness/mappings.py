@@ -22,6 +22,12 @@ FREQUENCY_SCALE: dict[str, int] = {
     "always":        5,
     "constantly":    5,
     "almost always": 5,
+    # Turkish aliases
+    "hiç":           1,
+    "nadiren":       2,
+    "bazen":         3,
+    "sık sık":       4,
+    "her zaman":     5,
 }
 
 # ─── Intensity scale ─────────────────────────────────────────────────────────
@@ -43,24 +49,42 @@ SENTIMENT_SCALE: dict[str, int] = {
     "neutral":                  3,
     "positive":                 4,
     "very positive":            5,
-    # morning-mood answer text
+    # morning-mood answer text (app form)
     "very sad / hopeless":      1,
     "sad":                      2,
     # "neutral" already mapped
     # "positive" already mapped
     "very happy / energized":   5,
+    # survey CSV aliases (English)
+    "very sad":                 1,
+    "energized":                5,
+    # survey CSV aliases (Turkish)
+    "çok olumsuz":              1,
+    "olumsuz":                  2,
+    "nötr":                     3,
+    "olumlu":                   4,
+    "çok olumlu":               5,
 }
 
 # ─── Support scale ───────────────────────────────────────────────────────────
-#   Not at all → Slightly → Moderately → Very → Extremely
+#   Not at all → Slightly → Moderately → Mostly/Very → Extremely/Very supported
+#   Note: CSV surveys use "Very" for level-4 and "Extremely" for level-5.
+#         App form uses "Mostly" for level-4 and "Very supported" for level-5.
+#         Both map to the same 1-5 numeric space.
 SUPPORT_SCALE: dict[str, int] = {
     "not at all":      1,
     "slightly":        2,
     "moderately":      3,
     "mostly":          4,
-    "very":            5,
-    "very supported":  5,
-    "extremely":       5,
+    "very":            4,   # CSV level-4 ("Very" supported)
+    "very supported":  5,   # App level-5
+    "extremely":       5,   # CSV level-5
+    # Turkish aliases
+    "hiç":             1,
+    "az":              2,
+    "orta düzeyde":    3,
+    "oldukça":         4,
+    "çok fazla":       5,
 }
 
 # ─── Motivation scale ────────────────────────────────────────────────────────
@@ -102,7 +126,7 @@ SLEEP_DURATION_MAP: dict[str, float] = {
     "3": 6.0,   # 6 hours
     "4": 7.5,   # 7-8 hours
     "5": 9.0,   # More than 8 hours
-    # natural-language aliases (Kaggle dataset style)
+    # natural-language aliases (Kaggle dataset style, regular hyphen)
     "less than 4 hours":  3.5,
     "less than 5 hours":  4.0,
     "4-5 hours":          4.5,
@@ -110,6 +134,15 @@ SLEEP_DURATION_MAP: dict[str, float] = {
     "6 hours":            6.0,
     "7-8 hours":          7.5,
     "more than 8 hours":  9.0,
+    # survey CSV aliases with en-dash (–) already normalised to hyphen by callers,
+    # but kept here as a safety net
+    "5\u20136 hours":     5.5,
+    "7\u20138 hours":     7.5,
+    # Turkish aliases
+    "5 saatten az":       4.0,
+    "5-6 saat":           5.5,
+    "7-8 saat":           7.5,
+    "8 saatten fazla":    9.0,
 }
 
 # ─── Field → scale registry ─────────────────────────────────────────────────
