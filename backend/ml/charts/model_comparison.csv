@@ -1,0 +1,4 @@
+Model,Accuracy,Precision,Recall,F1
+Logistic Regression,0.829 ± 0.059,0.669 ± 0.107,0.834 ± 0.050,0.740 ± 0.082
+Naive Bayes (Gaussian),0.837 ± 0.034,0.717 ± 0.071,0.720 ± 0.056,0.717 ± 0.057
+Random Forest (saved),0.858 ± 0.026,0.725 ± 0.065,0.827 ± 0.060,0.769 ± 0.039
