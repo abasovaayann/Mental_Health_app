@@ -1,0 +1,33 @@
+{
+  "cv_accuracy_mean": 0.8941,
+  "cv_accuracy_std": 0.044,
+  "cv_f1_mean": 0.8844,
+  "cv_f1_std": 0.0531,
+  "n_samples": 85,
+  "n_at_risk": 23,
+  "n_not_at_risk": 62,
+  "features": [
+    "sleep_duration",
+    "academic_pressure",
+    "financial_stress",
+    "study_motivation",
+    "concentration_difficulty",
+    "energy_level",
+    "morning_mood",
+    "emotional_low",
+    "anxiety_level",
+    "social_support"
+  ],
+  "risk_threshold": 2,
+  "label_logic": "well_being_score <= 2 → at-risk (1); else → not at-risk (0)",
+  "sources": [
+    "English student wellness survey CSV",
+    "Turkish student wellness survey CSV"
+  ],
+  "model_params": {
+    "n_estimators": 300,
+    "max_depth": 6,
+    "min_samples_leaf": 2,
+    "class_weight": "balanced"
+  }
+}
