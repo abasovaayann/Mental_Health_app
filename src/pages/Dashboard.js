@@ -122,8 +122,6 @@ const formatDate = (value) => {
   });
 };
 
-const AYHAN_IP = '10.204.253.234';
-
 const Dashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -134,8 +132,6 @@ const Dashboard = () => {
   const [dailyCheckinHistory, setDailyCheckinHistory] = useState({});
   const [scoreLoading, setScoreLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [seraData, setSeraData] = useState(null);
-  const [seraConnected, setSeraConnected] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -234,21 +230,6 @@ const Dashboard = () => {
     if (token) {
       fetchDashboardData();
     }
-  }, []);
-
-  useEffect(() => {
-    const ws = new WebSocket(`ws://${AYHAN_IP}:8080`);
-    ws.onopen = () => setSeraConnected(true);
-    ws.onclose = () => setSeraConnected(false);
-    ws.onerror = () => setSeraConnected(false);
-    ws.onmessage = (event) => {
-      try {
-        setSeraData(JSON.parse(event.data));
-      } catch {
-        // ham satır gelirse yoksay
-      }
-    };
-    return () => ws.close();
   }, []);
 
   const handleCheckinChange = (field, value) => {

@@ -128,10 +128,11 @@ const mapApiEntryToUi = (entry) => {
   };
 };
 
-const Diary = () => {
+const Diary = ({ mode = 'edit' }) => {
   const navigate = useNavigate();
   const { date: selectedDateParam } = useParams();
-  const isEditorPage = Boolean(selectedDateParam);
+  const isCreateRoute = mode === 'new';
+  const isEditorPage = isCreateRoute || Boolean(selectedDateParam);
   const todayDate = useMemo(() => formatDateInput(new Date()), []);
   const selectedDate = selectedDateParam || todayDate;
   const [calendarDate, setCalendarDate] = useState(() => new Date(`${selectedDate}T00:00:00`));
@@ -148,10 +149,11 @@ const Diary = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedMood, setSelectedMood] = useState('neutral');
-  const [tags, setTags] = useState(['#reflection']);
+  const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [draftState, setDraftState] = useState('idle');
   const [saveState, setSaveState] = useState('idle');
+  const [saveMessage, setSaveMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
@@ -170,11 +172,17 @@ const Diary = () => {
   const voiceNoteBaseContentRef = useRef('');
   const browserFinalTranscriptRef = useRef('');
   const liveTranscriptRef = useRef('');
+  const suppressDraftSaveRef = useRef(false);
+  const suppressEntryHydrationRef = useRef(false);
   const voiceLanguageRef = useRef('en-US');
   const isPausedRef = useRef(false);
   const isRecordingRef = useRef(false);
   const timerRef = useRef(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const draftStorageKey = useMemo(
+    () => (isCreateRoute ? 'diary_draft_new_entry' : `diary_draft_${selectedDate}`),
+    [isCreateRoute, selectedDate]
+  );
 
   const speechSupported = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -252,40 +260,53 @@ const Diary = () => {
       return;
     }
 
-    const queuedEditId = sessionStorage.getItem('diary_edit_entry_id');
+    if (suppressEntryHydrationRef.current) {
+      suppressEntryHydrationRef.current = false;
+      return;
+    }
+
+    const queuedEditId = isCreateRoute ? null : sessionStorage.getItem('diary_edit_entry_id');
     const activeEditId = queuedEditId || editingEntryId;
     if (queuedEditId) {
       setEditingEntryId(queuedEditId);
       sessionStorage.removeItem('diary_edit_entry_id');
     }
 
-    const selectedEntryForEdit = entries.find(
-      (entry) => entry.id === activeEditId && entry.date === selectedDate
-    );
-    if (selectedEntryForEdit) {
-      setTitle(selectedEntryForEdit.title);
-      setContent(selectedEntryForEdit.content);
-      setSelectedMood(selectedEntryForEdit.mood);
-      setTags(selectedEntryForEdit.tags.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)));
-      setSaveState('idle');
-      return;
-    }
-
-    if (activeEditId && editingEntryId && !selectedEntryForEdit) {
+    if (isCreateRoute && editingEntryId) {
       setEditingEntryId(null);
     }
 
-    const draftKey = `diary_draft_${selectedDate}`;
-    const saved = JSON.parse(localStorage.getItem(draftKey) || 'null');
+    if (!isCreateRoute) {
+      const selectedEntryForEdit = entries.find(
+        (entry) => entry.id === activeEditId && entry.date === selectedDate
+      );
+      if (selectedEntryForEdit) {
+        setTitle(selectedEntryForEdit.title);
+        setContent(selectedEntryForEdit.content);
+        setSelectedMood(selectedEntryForEdit.mood);
+        setTags(selectedEntryForEdit.tags.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`)));
+        setSaveState('idle');
+        setSaveMessage('');
+        return;
+      }
+
+      if (activeEditId && editingEntryId && !selectedEntryForEdit) {
+        setEditingEntryId(null);
+      }
+    }
+
+    const saved = JSON.parse(localStorage.getItem(draftStorageKey) || 'null');
     if (saved) {
       setTitle(saved.title || '');
       setContent(saved.content || '');
       setSelectedMood(saved.selectedMood || 'neutral');
-      setTags(Array.isArray(saved.tags) && saved.tags.length ? saved.tags : ['#reflection']);
+      setTags(Array.isArray(saved.tags) ? saved.tags : []);
+      setSaveState('idle');
+      setSaveMessage('');
       return;
     }
 
-    const existing = entries.find((entry) => entry.date === selectedDate);
+    const existing = !isCreateRoute ? entries.find((entry) => entry.date === selectedDate) : null;
     if (existing) {
       setTitle(existing.title);
       setContent(existing.content);
@@ -295,22 +316,27 @@ const Diary = () => {
       setTitle('');
       setContent('');
       setSelectedMood('neutral');
-      setTags(['#reflection']);
+      setTags([]);
     }
 
     setSaveState('idle');
-  }, [isEditorPage, selectedDate, entries]);
+    setSaveMessage('');
+  }, [draftStorageKey, editingEntryId, entries, isCreateRoute, isEditorPage, selectedDate]);
 
   useEffect(() => {
     if (!isEditorPage) {
       return;
     }
 
-    const draftKey = `diary_draft_${selectedDate}`;
+    if (suppressDraftSaveRef.current) {
+      suppressDraftSaveRef.current = false;
+      return;
+    }
+
     setDraftState('saving');
     const timeout = setTimeout(() => {
       localStorage.setItem(
-        draftKey,
+        draftStorageKey,
         JSON.stringify({
           title,
           content,
@@ -323,7 +349,7 @@ const Diary = () => {
     }, 700);
 
     return () => clearTimeout(timeout);
-  }, [isEditorPage, selectedDate, title, content, selectedMood, tags]);
+  }, [content, draftStorageKey, isEditorPage, selectedMood, tags, title]);
 
   // Cleanup active audio capture on unmount
   useEffect(() => {
@@ -352,7 +378,10 @@ const Diary = () => {
       return undefined;
     }
 
-    const timeout = setTimeout(() => setSaveState('idle'), 2200);
+    const timeout = setTimeout(() => {
+      setSaveState('idle');
+      setSaveMessage('');
+    }, 2200);
     return () => clearTimeout(timeout);
   }, [saveState]);
 
@@ -369,72 +398,10 @@ const Diary = () => {
   const wordsCount = useMemo(() => {
     return content.trim() ? content.trim().split(/\s+/).length : 0;
   }, [content]);
-
-  const aiMoodData = useMemo(() => {
-    const byMood = {
-      positive: {
-        mood: '😊 Calm',
-        insight:
-          'You are showing healthy recovery patterns today. Moments of gratitude and task completion are helping your stress stay manageable.',
-        suggestions: [
-          'Keep your evening wind-down routine simple and consistent.',
-          'Write 3 small goals for tomorrow to protect this momentum.',
-          'Take one short walk to maintain emotional balance.',
-        ],
-      },
-      neutral: {
-        mood: '🙂 Steady',
-        insight:
-          'Your mood appears balanced with mild mental load. Small moments of structure are preventing stress from building too quickly.',
-        suggestions: [
-          'Take short breaks between focused tasks.',
-          'Name one priority and let the rest wait for tomorrow.',
-          'Try 5 minutes of slow breathing before sleep.',
-        ],
-      },
-      negative: {
-        mood: '😔 Stressed',
-        insight:
-          'Your reflection suggests cognitive fatigue and pressure. You are still processing clearly, but your nervous system could benefit from slower pacing.',
-        suggestions: [
-          'Split big tasks into 15-minute blocks with pauses.',
-          'Write one supportive sentence to yourself before bed.',
-          'Reduce screen stimulation for 30 minutes tonight.',
-        ],
-      },
-    };
-
-    return byMood[selectedMood] || byMood.neutral;
-  }, [selectedMood]);
-
-  const aiConfidence = useMemo(() => {
-    const base = selectedMood === 'negative' ? 76 : selectedMood === 'positive' ? 81 : 78;
-    const wordBoost = Math.min(8, Math.floor(wordsCount / 45));
-    const voiceBoost = transcript.trim() ? 3 : 0;
-    return Math.min(94, base + wordBoost + voiceBoost);
-  }, [selectedMood, wordsCount, transcript]);
-
-  const energyLevel = useMemo(() => {
-    if (wordsCount < 90) {
-      return 'Low';
-    }
-    if (wordsCount < 220) {
-      return 'Medium';
-    }
-    return 'High';
-  }, [wordsCount]);
-
-  const mainTheme = useMemo(() => {
-    const cleaned = tags
-      .map((tag) => tag.replace('#', '').trim())
-      .find((tag) => tag && tag !== 'reflection');
-
-    if (!cleaned) {
-      return 'General reflection';
-    }
-
-    return `${cleaned.charAt(0).toUpperCase()}${cleaned.slice(1)} focus`;
-  }, [tags]);
+
+
+
+
 
   const readMinutes = Math.max(1, Math.ceil(wordsCount / 180));
   const isSaveDisabled = !title.trim() || !content.trim();
@@ -480,6 +447,7 @@ const Diary = () => {
     };
 
     try {
+      const wasEditing = Boolean(editingEntryId);
       if (editingEntryId) {
         const response = await api.put(`/diary/entries/${editingEntryId}`, preparedEntry);
         const updatedEntry = mapApiEntryToUi(response.data);
@@ -490,12 +458,28 @@ const Diary = () => {
         setEntries((prev) => [createdEntry, ...prev]);
       }
 
-      localStorage.removeItem(`diary_draft_${selectedDate}`);
-      setDraftState('saved');
+      localStorage.removeItem(draftStorageKey);
+      suppressDraftSaveRef.current = true;
+      suppressEntryHydrationRef.current = true;
+      voiceNoteBaseContentRef.current = '';
+      browserFinalTranscriptRef.current = '';
+      liveTranscriptRef.current = '';
+      setEditingEntryId(null);
+      setTitle('');
+      setContent('');
+      setSelectedMood('neutral');
+      setTags([]);
+      setTagInput('');
+      setTranscript('');
+      setInterimTranscript('');
+      setRecordingStatus('Ready');
+      setDraftState('idle');
       setSaveState('success');
+      setSaveMessage(wasEditing ? 'Entry updated successfully.' : 'Entry saved successfully.');
     } catch (error) {
       console.error('Failed to save diary entry', error);
       setSaveState('idle');
+      setSaveMessage('');
     }
   };
 
@@ -869,8 +853,9 @@ const Diary = () => {
         setTitle('');
         setContent('');
         setSelectedMood('neutral');
-        setTags(['#reflection']);
+        setTags([]);
         setSaveState('idle');
+        setSaveMessage('');
       }
     } catch (error) {
       console.error('Failed to delete diary entry', error);
@@ -892,10 +877,11 @@ const Diary = () => {
         footerSlot={
           <button
             type="button"
+            onClick={() => navigate('/diary')}
             className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 py-3.5 font-semibold text-white transition-all hover:bg-white/15"
           >
-            <span className="material-symbols-outlined text-sm font-bold">add</span>
-            <span className="text-sm">New Entry</span>
+            <span className="material-symbols-outlined text-sm font-bold">history</span>
+            <span className="text-sm">Diary Archive</span>
           </button>
         }
       />
@@ -912,7 +898,9 @@ const Diary = () => {
             </button>
             <div>
               <h1 className="font-display text-2xl font-bold text-text-heading">Diary</h1>
-              <p className="mt-1 text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">Write and review your reflections.</p>
+              <p className="mt-1 text-sm font-medium text-text-secondary-light dark:text-text-secondary-dark">
+                {isCreateRoute ? 'Write a new reflection.' : 'Write and review your reflections.'}
+              </p>
             </div>
           </header>
 
@@ -1065,7 +1053,7 @@ const Diary = () => {
 
           {isEditorPage && (
             <div className="grid grid-cols-1 gap-6 xl:min-h-[calc(100vh-10rem)] xl:grid-cols-12 xl:items-stretch">
-              <section className="xl:col-span-8 flex flex-col gap-6 xl:h-full">
+              <section className="xl:col-span-7 flex flex-col gap-6 xl:h-full">
                 <div className="flex items-center gap-4 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm dark:border-border-dark dark:bg-surface-dark">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-50 dark:bg-amber-900/20">
                     <span className="material-symbols-outlined text-amber-500">lightbulb</span>
@@ -1088,6 +1076,11 @@ const Diary = () => {
                 </div>
 
                 <div className="flex flex-col gap-6 rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark sm:p-8 xl:flex-1">
+                  {saveState === 'success' && saveMessage && (
+                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-900/20 dark:text-emerald-300">
+                      {saveMessage}
+                    </div>
+                  )}
                   <div className="flex flex-col gap-4 md:flex-row md:items-start">
                     <div className="flex-1">
                       <input
@@ -1209,10 +1202,17 @@ const Diary = () => {
                       <button
                         type="button"
                         onClick={() => {
+                          localStorage.removeItem(draftStorageKey);
+                          suppressDraftSaveRef.current = true;
                           setEditingEntryId(null);
                           setTitle('');
                           setContent('');
-                          setTags(['#reflection']);
+                          setSelectedMood('neutral');
+                          setTags([]);
+                          setTagInput('');
+                          setDraftState('idle');
+                          setSaveMessage('');
+                          setSaveState('idle');
                           discardRecording();
                         }}
                         className="rounded-xl border border-slate-200 px-6 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -1225,15 +1225,15 @@ const Diary = () => {
                         onClick={saveEntry}
                         className="rounded-xl bg-primary px-8 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {saveState === 'success' ? 'Saved ✓' : editingEntryId ? 'Update Entry' : 'Save Entry'}
+                        {saveState === 'success' ? 'Saved' : editingEntryId ? 'Update Entry' : 'Save Entry'}
                       </button>
                     </div>
                   </div>
                 </div>
               </section>
 
-              <aside className="xl:col-span-4 flex flex-col gap-6 xl:h-full xl:justify-between">
-                <div className="rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark">
+              <aside className="xl:col-span-5 flex h-full flex-col gap-6">
+                <div className="flex min-h-[42rem] flex-1 flex-col rounded-3xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark">
                   <div className="mb-6 flex items-center justify-between">
                     <p className="font-display text-lg font-bold text-slate-800 dark:text-white">Voice Diary</p>
                     <div className="flex items-center gap-2">
@@ -1248,7 +1248,7 @@ const Diary = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center gap-6 py-2">
+                  <div className="flex flex-1 flex-col items-center gap-6 py-2">
                     <button
                       type="button"
                       onClick={isRecording ? (isPaused ? resumeRecording : stopAndSaveRecording) : startRecording}
@@ -1318,7 +1318,7 @@ const Diary = () => {
                       </button>
                     </div>
 
-                    <div id="liveTranscript" className="w-full rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                    <div id="liveTranscript" className="flex min-h-[14rem] w-full flex-1 flex-col rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
                       <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">Whisper Transcription</p>
                       <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                         {isTranscribing ? (
@@ -1338,78 +1338,8 @@ const Diary = () => {
                   </div>
                 </div>
 
-                <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <article className="rounded-3xl border border-blue-100 bg-blue-50/70 p-5 shadow-sm transition-all hover:shadow-md dark:border-blue-900/50 dark:bg-blue-950/20">
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">AI Analysis</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Emotion detection from your writing + voice</p>
-                      </div>
-                      <span className="material-symbols-outlined text-blue-500">neurology</span>
-                    </div>
-
-                    <div className="mb-3 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-sm dark:bg-slate-900/50">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">Detected mood</span>
-                      <span className="font-bold text-slate-800 dark:text-white">{aiMoodData.mood}</span>
-                    </div>
-
-                    <div className="mb-3 flex items-center justify-between rounded-2xl bg-white/70 px-3 py-2 text-sm dark:bg-slate-900/50">
-                      <span className="font-semibold text-slate-600 dark:text-slate-300">Confidence</span>
-                      <span className="font-bold text-blue-700 dark:text-blue-300">{aiConfidence}%</span>
-                    </div>
-
-                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">{aiMoodData.insight}</p>
-                  </article>
-
+                <section className="shrink-0">
                   <article className="rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">Daily Summary</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Quick snapshot for today</p>
-                      </div>
-                      <span className="material-symbols-outlined text-slate-400">monitoring</span>
-                    </div>
-
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400">Mood</span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{moodMeta[selectedMood].label}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400">Energy level</span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{energyLevel}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400">Main theme</span>
-                        <span className="font-semibold text-right text-slate-700 dark:text-slate-200">{mainTheme}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                        <span className="text-slate-500 dark:text-slate-400">Word count</span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-200">{wordsCount}</span>
-                      </div>
-                    </div>
-                  </article>
-
-                  <article className="md:col-span-2 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-display text-base font-bold text-slate-800 dark:text-white">Suggestions</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Gentle actions based on today&apos;s emotional pattern</p>
-                      </div>
-                      <span className="material-symbols-outlined text-amber-500">tips_and_updates</span>
-                    </div>
-
-                    <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                      {aiMoodData.suggestions.slice(0, 3).map((item) => (
-                        <li key={item} className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2 dark:bg-slate-800/60">
-                          <span className="mt-[2px] h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-
-                  <article className="md:col-span-2 rounded-3xl border border-slate-100 bg-surface-light p-5 shadow-sm transition-all hover:shadow-md dark:border-border-dark dark:bg-surface-dark">
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
                         <p className="font-display text-base font-bold text-slate-800 dark:text-white">Same Day Entries</p>
@@ -1624,3 +1554,4 @@ const Diary = () => {
 };
 
 export default Diary;
+
