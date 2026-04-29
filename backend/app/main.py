@@ -31,6 +31,14 @@ def ensure_schema_compatibility() -> None:
                 """
             )
         )
+        connection.execute(
+            text(
+                """
+                ALTER TABLE IF EXISTS user_reminders
+                ADD COLUMN IF NOT EXISTS last_sent_at TIMESTAMP
+                """
+            )
+        )
 
     _migrate_legacy_chat_messages()
 
@@ -92,6 +100,31 @@ app.add_middleware(
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+
+# Background task for reminders
+@app.on_event("startup")
+async def startup_event():
+    """Start background reminder task on app startup."""
+    import asyncio
+    from app.database import SessionLocal
+    from services.reminder_service import ReminderService
+    
+    async def check_reminders_periodically():
+        """Check and send reminders every hour."""
+        while True:
+            try:
+                db = SessionLocal()
+                ReminderService.send_pending_reminders(db)
+                db.close()
+            except Exception as e:
+                print(f"Error in reminder task: {e}")
+            
+            # Check every hour
+            await asyncio.sleep(3600)
+    
+    # Start background task
+    asyncio.create_task(check_reminders_periodically())
 
 
 @app.get("/")

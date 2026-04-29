@@ -2,10 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
+import ReminderSettings from '../components/ReminderSettings';
 import { getStoredTheme, setTheme } from '../theme';
 
 const SETTINGS_SECTIONS = [
   { key: 'profile', label: 'Account & Profile', icon: 'person' },
+  { key: 'reminders', label: 'Email Reminders', icon: 'mail_outline' },
   { key: 'notifications', label: 'Notifications', icon: 'notifications' },
   { key: 'appearance', label: 'Appearance', icon: 'palette' },
   { key: 'diary', label: 'Diary Settings', icon: 'edit_note' },
@@ -409,7 +411,14 @@ const Settings = () => {
           </Section>
 
           {/* ═══════════════════════════════════════
-             2. NOTIFICATIONS
+             2. EMAIL REMINDERS
+             ═══════════════════════════════════════ */}
+          <Section id="section-reminders" icon="mail_outline" title="Email Reminders" desc="Set up daily check-in reminders via email.">
+            <ReminderSettings onToast={showToast} />
+          </Section>
+
+          {/* ═══════════════════════════════════════
+             3. NOTIFICATIONS
              ═══════════════════════════════════════ */}
           <Section id="section-notifications" icon="notifications" title="Notifications" desc="Choose which alerts and reminders you receive.">
             <Row label="Daily check-in reminder" desc="Get a reminder to log your mood every day.">

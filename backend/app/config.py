@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     # CORS
     BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000"]
     
+    # Email Configuration (for reminders)
+    SMTP_SERVER: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    EMAIL_FROM: str = ""
+    EMAIL_PASSWORD: str = ""
+    
     # Environment
     ENVIRONMENT: str = "development"
     
