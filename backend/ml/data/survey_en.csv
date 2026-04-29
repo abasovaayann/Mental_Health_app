@@ -1,0 +1,358 @@
+timestamp,sleep,energy,academic_pressure,study_motivation,concentration,morning_mood,emotional_low,anxiety,social_support,financial_stress,wellbeing
+09.03.2026 19:43:41,5-6 hours,4,Never,1,Sometimes,Very sad,Always,Rarely,Moderately,3,Neutral
+09.03.2026 21:14:28,Less than 5 hours,3,Often,3,Never,Positive,Sometimes,Rarely,Extremely,5,Very poor
+09.03.2026 21:14:47,7-8 hours,3,Sometimes,3,Sometimes,Neutral,Sometimes,Sometimes,Moderately,3,Good
+09.03.2026 21:15:54,More than 8 hours,3,Rarely,3,Often,Neutral,Sometimes,Often,Very,4,Good
+09.03.2026 21:16:37,7-8 hours,5,Often,3,Often,Positive,Sometimes,Rarely,Moderately,5,Good
+09.03.2026 21:19:05,5-6 hours,4,Rarely,4,Rarely,Neutral,Sometimes,Sometimes,Very,1,Good
+09.03.2026 21:20:27,7-8 hours,4,Sometimes,4,Sometimes,Neutral,Sometimes,Sometimes,Very,3,Neutral
+09.03.2026 21:22:37,7-8 hours,5,Always,5,Sometimes,Neutral,Rarely,Rarely,Very,5,Very good
+09.03.2026 21:25:08,5-6 hours,3,Sometimes,3,Often,Sad,Sometimes,Rarely,Moderately,1,Good
+09.03.2026 21:25:40,Less than 5 hours,3,Rarely,1,Sometimes,Neutral,Often,Often,Slightly,2,Neutral
+09.03.2026 21:30:00,More than 8 hours,5,Sometimes,2,Rarely,Positive,Sometimes,Rarely,Very,3,Good
+09.03.2026 21:39:23,7-8 hours,3,Sometimes,2,Often,Neutral,Sometimes,Sometimes,Not at all,1,Neutral
+09.03.2026 21:48:50,7-8 hours,3,Sometimes,2,Often,Neutral,Sometimes,Sometimes,Very,5,Neutral
+09.03.2026 22:17:53,7-8 hours,3,Often,3,Often,Sad,Often,Often,Moderately,5,Poor
+10.03.2026 0:26:28,7-8 hours,3,Sometimes,3,Rarely,Positive,Sometimes,Rarely,Extremely,2,Neutral
+10.03.2026 0:26:33,5-6 hours,3,Often,4,Rarely,Neutral,Sometimes,Sometimes,Very,4,Good
+10.03.2026 0:28:50,More than 8 hours,5,Sometimes,2,Sometimes,Sad,Sometimes,Never,Very,3,Good
+10.03.2026 0:32:14,5-6 hours,5,Often,3,Never,Neutral,Never,Always,Very,1,Good
+10.03.2026 0:34:15,More than 8 hours,3,Sometimes,2,Rarely,Neutral,Sometimes,Often,Slightly,5,Neutral
+10.03.2026 0:35:00,Less than 5 hours,3,Sometimes,3,Sometimes,Neutral,Rarely,Rarely,Slightly,3,Neutral
+10.03.2026 0:35:38,5-6 hours,2,Sometimes,1,Often,Sad,Sometimes,Always,Slightly,5,Poor
+10.03.2026 0:35:53,5-6 hours,3,Never,5,Rarely,Neutral,Often,Never,Slightly,5,Very good
+10.03.2026 0:36:23,Less than 5 hours,3,Often,2,Sometimes,Neutral,Sometimes,Often,Extremely,1,Neutral
+10.03.2026 0:36:57,More than 8 hours,1,Sometimes,2,Often,Positive,Rarely,Rarely,Slightly,5,Very good
+10.03.2026 0:38:17,5-6 hours,3,Sometimes,2,Rarely,Neutral,Often,Sometimes,Moderately,2,Neutral
+10.03.2026 0:38:49,5-6 hours,2,Sometimes,3,Rarely,Positive,Rarely,Rarely,Moderately,2,Neutral
+10.03.2026 0:38:57,7-8 hours,4,Sometimes,3,Often,Neutral,Sometimes,Often,Moderately,2,Neutral
+10.03.2026 0:39:39,7-8 hours,4,Rarely,2,Rarely,Positive,Often,Often,Very,2,Good
+10.03.2026 0:40:23,7-8 hours,3,Always,1,Sometimes,Neutral,Sometimes,Always,Not at all,3,Very poor
+10.03.2026 0:48:24,7-8 hours,3,Sometimes,4,Sometimes,Positive,Rarely,Sometimes,Moderately,4,Good
+10.03.2026 1:21:16,Less than 5 hours,2,Rarely,1,Always,Sad,Often,Often,Moderately,5,Poor
+10.03.2026 2:33:03,5-6 hours,4,Sometimes,3,Sometimes,Neutral,Rarely,Rarely,Very,3,Neutral
+10.03.2026 2:33:24,7-8 hours,3,Rarely,5,Rarely,Positive,Often,Always,Slightly,3,Poor
+10.03.2026 4:58:18,5-6 hours,4,Often,3,Often,Neutral,Sometimes,Rarely,Very,3,Good
+10.03.2026 11:48:08,7-8 hours,3,Rarely,4,Sometimes,Positive,Sometimes,Sometimes,Very,2,Good
+10.03.2026 11:52:36,5-6 hours,3,Often,4,Sometimes,Sad,Sometimes,Often,Very,3,Neutral
+10.03.2026 11:57:08,5-6 hours,3,Always,2,Sometimes,Neutral,Often,Often,Very,4,Poor
+10.03.2026 12:06:24,5-6 hours,3,Sometimes,4,Sometimes,Positive,Rarely,Rarely,Very,2,Very good
+26.03.2026 13:52:29,7-8 hours,3,Often,2,Often,Neutral,Often,Often,Moderately,4,Poor
+13.04.2026 11:56:59,7-8 hours,3,Often,4,Always,Neutral,Often,Often,Very,5,Poor
+13.04.2026 11:57:06,More than 8 hours,3,Sometimes,3,Often,Neutral,Sometimes,Often,Very,5,Neutral
+13.04.2026 11:58:51,7-8 hours,4,Sometimes,4,Sometimes,Energized,Sometimes,Sometimes,Extremely,3,Good
+13.04.2026 11:59:18,7-8 hours,3,Always,3,Always,Sad,Often,Often,Very,3,Neutral
+13.04.2026 12:06:36,More than 8 hours,3,Often,2,Often,Neutral,Sometimes,Sometimes,Not at all,1,Neutral
+13.04.2026 12:09:03,7-8 hours,4,Sometimes,3,Sometimes,Positive,Sometimes,Rarely,Extremely,3,Good
+13.04.2026 12:17:36,5-6 hours,4,Sometimes,3,Sometimes,Neutral,Rarely,Sometimes,Very,2,Good
+13.04.2026 12:22:54,7-8 hours,5,Often,5,Sometimes,Neutral,Rarely,Never,Very,4,Neutral
+13.04.2026 12:23:42,7-8 hours,5,Rarely,5,Rarely,Neutral,Rarely,Rarely,Very,3,Good
+13.04.2026 12:26:34,5-6 hours,3,Often,3,Sometimes,Neutral,Sometimes,Sometimes,Moderately,4,Poor
+13.04.2026 12:39:16,7-8 hours,3,Always,3,Often,Sad,Often,Always,Moderately,5,Very poor
+13.04.2026 12:41:56,7-8 hours,2,Often,2,Often,Neutral,Always,Always,Moderately,5,Poor
+13.04.2026 12:54:11,Less than 5 hours,3,Always,2,Often,Neutral,Often,Always,Moderately,3,Poor
+13.04.2026 14:40:47,5-6 hours,4,Often,3,Sometimes,Neutral,Often,Often,Very,4,Neutral
+13.04.2026 16:27:50,7-8 hours,3,Often,2,Often,Neutral,Often,Often,Very,5,Poor
+13.04.2026 21:32:53,5-6 hours,4,Often,2,Often,Neutral,Sometimes,Often,Moderately,3,Neutral
+14.04.2026 8:14:49,5-6 hours,3,Often,1,Sometimes,Neutral,Often,Often,Slightly,5,Poor
+15.04.2026 1:14:47,5-6 hours,2,Often,2,Often,Neutral,Sometimes,Often,Moderately,3,Neutral
+24.04.2026 08:00:00,7-8 hours,3,Rarely,2,Sometimes,Neutral,Sometimes,Never,Slightly,2,Good
+24.04.2026 08:42:00,7-8 hours,3,Rarely,3,Often,Very sad,Sometimes,Sometimes,Moderately,2,Very good
+24.04.2026 08:42:00,7-8 hours,3,Sometimes,2,Never,Neutral,Rarely,Often,Slightly,2,Good
+24.04.2026 09:11:00,7-8 hours,4,Never,2,Rarely,Sad,Rarely,Rarely,Moderately,3,Neutral
+24.04.2026 09:26:00,7-8 hours,4,Often,2,Sometimes,Neutral,Rarely,Rarely,Moderately,5,Good
+24.04.2026 09:50:00,7-8 hours,3,Sometimes,1,Sometimes,Sad,Sometimes,Always,Very,3,Poor
+24.04.2026 10:29:00,7-8 hours,3,Rarely,4,Sometimes,Positive,Sometimes,Sometimes,Moderately,5,Neutral
+24.04.2026 10:44:00,Less than 5 hours,3,Sometimes,4,Sometimes,Sad,Sometimes,Always,Very,5,Good
+24.04.2026 11:03:00,Less than 5 hours,4,Often,3,Sometimes,Sad,Sometimes,Never,Very,5,Poor
+24.04.2026 11:16:00,More than 8 hours,5,Sometimes,3,Sometimes,Neutral,Sometimes,Sometimes,Very,3,Neutral
+24.04.2026 11:20:00,5-6 hours,3,Always,4,Rarely,Neutral,Sometimes,Never,Very,5,Very good
+24.04.2026 11:44:00,5-6 hours,3,Sometimes,2,Often,Neutral,Rarely,Sometimes,Very,2,Neutral
+24.04.2026 12:20:00,7-8 hours,5,Sometimes,2,Rarely,Sad,Sometimes,Sometimes,Not at all,4,Neutral
+24.04.2026 12:21:00,7-8 hours,2,Sometimes,3,Sometimes,Sad,Always,Often,Moderately,5,Poor
+24.04.2026 12:43:00,7-8 hours,3,Often,3,Rarely,Neutral,Often,Rarely,Very,5,Very poor
+24.04.2026 13:17:00,5-6 hours,3,Sometimes,2,Always,Neutral,Often,Often,Not at all,5,Poor
+24.04.2026 13:49:00,7-8 hours,3,Sometimes,3,Often,Positive,Rarely,Never,Very,5,Good
+24.04.2026 14:02:00,More than 8 hours,5,Often,3,Sometimes,Sad,Always,Often,Moderately,5,Very poor
+24.04.2026 14:16:00,More than 8 hours,3,Rarely,3,Often,Sad,Rarely,Often,Very,5,Neutral
+24.04.2026 14:21:00,7-8 hours,3,Sometimes,3,Often,Neutral,Sometimes,Rarely,Very,4,Neutral
+24.04.2026 15:04:00,More than 8 hours,1,Sometimes,3,Rarely,Neutral,Sometimes,Rarely,Moderately,1,Neutral
+24.04.2026 15:14:00,7-8 hours,3,Often,5,Often,Very sad,Often,Sometimes,Moderately,5,Very poor
+24.04.2026 15:23:00,7-8 hours,2,Sometimes,2,Sometimes,Neutral,Often,Often,Slightly,5,Very poor
+24.04.2026 16:06:00,5-6 hours,1,Often,3,Rarely,Positive,Sometimes,Rarely,Not at all,1,Good
+24.04.2026 16:17:00,Less than 5 hours,3,Sometimes,3,Never,Neutral,Often,Always,Slightly,3,Good
+24.04.2026 16:31:00,7-8 hours,5,Sometimes,3,Rarely,Positive,Often,Always,Very,5,Neutral
+24.04.2026 16:50:00,7-8 hours,3,Sometimes,4,Rarely,Neutral,Sometimes,Rarely,Slightly,3,Neutral
+24.04.2026 17:11:00,5-6 hours,4,Rarely,1,Rarely,Neutral,Often,Always,Moderately,4,Neutral
+24.04.2026 17:37:00,5-6 hours,2,Often,2,Sometimes,Energized,Rarely,Sometimes,Moderately,5,Neutral
+24.04.2026 17:43:00,7-8 hours,3,Sometimes,4,Never,Positive,Sometimes,Sometimes,Very,4,Neutral
+24.04.2026 18:21:00,7-8 hours,3,Often,1,Always,Neutral,Often,Often,Very,4,Very poor
+24.04.2026 18:32:00,7-8 hours,5,Sometimes,3,Sometimes,Very sad,Rarely,Rarely,Very,4,Neutral
+24.04.2026 18:46:00,7-8 hours,4,Always,4,Sometimes,Neutral,Sometimes,Sometimes,Slightly,5,Neutral
+24.04.2026 19:25:00,5-6 hours,2,Sometimes,3,Often,Sad,Sometimes,Sometimes,Moderately,4,Neutral
+24.04.2026 19:40:00,7-8 hours,4,Always,4,Often,Sad,Often,Often,Moderately,4,Poor
+24.04.2026 19:44:00,7-8 hours,3,Always,2,Always,Positive,Often,Often,Moderately,5,Poor
+24.04.2026 20:23:00,More than 8 hours,3,Often,4,Rarely,Positive,Sometimes,Rarely,Very,4,Neutral
+24.04.2026 20:48:00,7-8 hours,3,Sometimes,4,Sometimes,Sad,Sometimes,Sometimes,Very,2,Neutral
+24.04.2026 20:58:00,More than 8 hours,2,Often,3,Sometimes,Positive,Rarely,Rarely,Extremely,5,Neutral
+24.04.2026 21:25:00,7-8 hours,3,Rarely,3,Never,Neutral,Sometimes,Rarely,Moderately,3,Neutral
+24.04.2026 21:20:00,More than 8 hours,4,Sometimes,2,Sometimes,Positive,Rarely,Rarely,Moderately,3,Neutral
+24.04.2026 21:48:00,7-8 hours,4,Sometimes,2,Never,Neutral,Always,Rarely,Very,5,Good
+24.04.2026 22:30:00,5-6 hours,4,Sometimes,2,Sometimes,Neutral,Often,Rarely,Moderately,3,Good
+24.04.2026 22:42:00,5-6 hours,4,Always,2,Never,Neutral,Sometimes,Always,Very,4,Neutral
+24.04.2026 23:00:00,5-6 hours,4,Sometimes,4,Often,Positive,Sometimes,Never,Very,4,Neutral
+24.04.2026 23:00:00,More than 8 hours,4,Rarely,5,Sometimes,Positive,Sometimes,Rarely,Very,5,Neutral
+24.04.2026 23:37:00,7-8 hours,3,Often,3,Sometimes,Neutral,Often,Rarely,Very,4,Neutral
+24.04.2026 23:50:00,Less than 5 hours,4,Rarely,2,Often,Neutral,Often,Sometimes,Moderately,1,Very good
+25.04.2026 00:23:00,5-6 hours,3,Sometimes,2,Often,Neutral,Rarely,Sometimes,Moderately,3,Poor
+25.04.2026 00:37:00,7-8 hours,3,Often,3,Sometimes,Neutral,Rarely,Rarely,Moderately,1,Neutral
+25.04.2026 00:45:00,5-6 hours,4,Sometimes,3,Often,Neutral,Often,Often,Moderately,3,Neutral
+25.04.2026 01:04:00,5-6 hours,5,Sometimes,4,Rarely,Positive,Sometimes,Often,Very,3,Neutral
+25.04.2026 01:21:00,5-6 hours,4,Sometimes,1,Often,Neutral,Often,Sometimes,Very,5,Very poor
+25.04.2026 01:57:00,7-8 hours,3,Always,2,Often,Neutral,Sometimes,Always,Extremely,3,Poor
+25.04.2026 02:23:00,5-6 hours,4,Sometimes,2,Rarely,Neutral,Sometimes,Rarely,Very,4,Neutral
+25.04.2026 02:29:00,7-8 hours,3,Often,3,Always,Neutral,Often,Often,Very,4,Poor
+25.04.2026 03:09:00,5-6 hours,3,Rarely,4,Sometimes,Positive,Often,Rarely,Very,2,Neutral
+25.04.2026 03:17:00,5-6 hours,2,Rarely,2,Sometimes,Sad,Sometimes,Always,Very,4,Poor
+25.04.2026 03:41:00,7-8 hours,3,Often,2,Sometimes,Neutral,Rarely,Always,Very,5,Very good
+25.04.2026 03:53:00,5-6 hours,4,Often,3,Sometimes,Neutral,Often,Often,Very,3,Neutral
+25.04.2026 04:24:00,7-8 hours,3,Always,3,Sometimes,Neutral,Rarely,Rarely,Very,3,Good
+25.04.2026 04:37:00,Less than 5 hours,3,Always,2,Rarely,Neutral,Often,Often,Slightly,1,Poor
+25.04.2026 05:06:00,7-8 hours,3,Sometimes,3,Often,Neutral,Often,Sometimes,Very,5,Poor
+25.04.2026 05:12:00,5-6 hours,4,Often,2,Rarely,Positive,Often,Rarely,Very,2,Neutral
+25.04.2026 05:46:00,7-8 hours,5,Sometimes,2,Sometimes,Neutral,Sometimes,Sometimes,Very,2,Neutral
+25.04.2026 05:58:00,7-8 hours,4,Sometimes,3,Sometimes,Positive,Sometimes,Always,Very,4,Neutral
+25.04.2026 06:04:00,7-8 hours,4,Often,4,Sometimes,Neutral,Sometimes,Sometimes,Very,4,Neutral
+25.04.2026 06:28:00,5-6 hours,4,Sometimes,4,Often,Positive,Sometimes,Rarely,Very,4,Good
+25.04.2026 06:42:00,5-6 hours,3,Sometimes,2,Rarely,Positive,Often,Often,Not at all,3,Poor
+25.04.2026 07:10:00,7-8 hours,3,Sometimes,1,Often,Neutral,Often,Sometimes,Not at all,5,Poor
+25.04.2026 07:49:00,5-6 hours,2,Often,2,Often,Positive,Often,Sometimes,Moderately,2,Poor
+25.04.2026 07:49:00,7-8 hours,3,Sometimes,4,Rarely,Neutral,Sometimes,Rarely,Very,3,Very good
+25.04.2026 08:26:00,7-8 hours,3,Often,3,Often,Very sad,Often,Often,Very,3,Poor
+25.04.2026 08:31:00,5-6 hours,3,Sometimes,4,Often,Positive,Rarely,Rarely,Very,1,Good
+25.04.2026 08:51:00,7-8 hours,2,Sometimes,3,Sometimes,Sad,Often,Always,Moderately,5,Poor
+25.04.2026 09:26:00,More than 8 hours,5,Sometimes,4,Often,Neutral,Rarely,Always,Slightly,5,Poor
+25.04.2026 09:47:00,7-8 hours,3,Often,1,Sometimes,Neutral,Sometimes,Sometimes,Very,5,Very good
+25.04.2026 09:47:00,5-6 hours,3,Always,2,Often,Neutral,Often,Often,Very,5,Very poor
+25.04.2026 10:01:00,5-6 hours,3,Rarely,4,Sometimes,Neutral,Often,Always,Extremely,4,Poor
+25.04.2026 10:33:00,7-8 hours,4,Often,4,Sometimes,Neutral,Sometimes,Often,Slightly,3,Poor
+25.04.2026 11:08:00,More than 8 hours,3,Sometimes,2,Rarely,Positive,Sometimes,Sometimes,Very,3,Neutral
+25.04.2026 11:07:00,More than 8 hours,4,Rarely,4,Sometimes,Neutral,Sometimes,Rarely,Very,5,Good
+25.04.2026 11:24:00,More than 8 hours,3,Always,1,Always,Sad,Sometimes,Always,Moderately,1,Poor
+25.04.2026 11:53:00,5-6 hours,3,Often,3,Often,Sad,Often,Always,Not at all,5,Poor
+25.04.2026 12:14:00,7-8 hours,2,Always,4,Sometimes,Neutral,Sometimes,Rarely,Extremely,2,Neutral
+25.04.2026 12:39:00,7-8 hours,3,Sometimes,5,Often,Neutral,Often,Rarely,Very,5,Poor
+25.04.2026 13:03:00,More than 8 hours,3,Often,3,Often,Neutral,Sometimes,Rarely,Moderately,2,Very good
+25.04.2026 13:15:00,5-6 hours,4,Rarely,2,Sometimes,Positive,Sometimes,Sometimes,Very,2,Neutral
+25.04.2026 13:41:00,More than 8 hours,3,Often,2,Rarely,Neutral,Rarely,Sometimes,Moderately,3,Good
+25.04.2026 13:57:00,7-8 hours,4,Sometimes,4,Often,Energized,Sometimes,Sometimes,Very,1,Good
+25.04.2026 14:08:00,Less than 5 hours,3,Often,5,Sometimes,Neutral,Rarely,Sometimes,Slightly,4,Very good
+25.04.2026 14:36:00,5-6 hours,3,Sometimes,2,Often,Neutral,Often,Rarely,Not at all,2,Poor
+25.04.2026 14:48:00,7-8 hours,3,Sometimes,3,Rarely,Neutral,Sometimes,Rarely,Very,3,Neutral
+25.04.2026 15:07:00,7-8 hours,4,Never,3,Rarely,Neutral,Rarely,Rarely,Not at all,4,Neutral
+25.04.2026 15:42:00,5-6 hours,3,Sometimes,3,Sometimes,Positive,Sometimes,Rarely,Slightly,2,Neutral
+25.04.2026 16:00:00,7-8 hours,3,Never,3,Often,Neutral,Sometimes,Often,Slightly,5,Neutral
+25.04.2026 16:16:00,5-6 hours,5,Often,2,Often,Sad,Sometimes,Sometimes,Moderately,5,Neutral
+25.04.2026 16:40:00,7-8 hours,3,Rarely,2,Sometimes,Positive,Sometimes,Rarely,Very,3,Good
+25.04.2026 16:54:00,7-8 hours,5,Sometimes,5,Sometimes,Energized,Sometimes,Rarely,Very,3,Good
+25.04.2026 17:11:00,7-8 hours,3,Sometimes,2,Often,Sad,Often,Often,Very,3,Neutral
+25.04.2026 17:45:00,7-8 hours,2,Often,3,Rarely,Neutral,Sometimes,Always,Very,5,Good
+25.04.2026 17:42:00,7-8 hours,3,Sometimes,3,Sometimes,Neutral,Rarely,Rarely,Moderately,3,Neutral
+25.04.2026 18:25:00,7-8 hours,3,Sometimes,3,Sometimes,Neutral,Often,Always,Very,2,Neutral
+25.04.2026 18:49:00,5-6 hours,5,Often,3,Sometimes,Positive,Sometimes,Rarely,Very,5,Good
+25.04.2026 19:03:00,More than 8 hours,5,Rarely,4,Sometimes,Sad,Sometimes,Always,Moderately,5,Neutral
+25.04.2026 19:04:00,5-6 hours,4,Rarely,4,Often,Positive,Rarely,Rarely,Very,1,Neutral
+25.04.2026 19:46:00,7-8 hours,3,Always,3,Rarely,Neutral,Often,Always,Moderately,5,Poor
+25.04.2026 19:47:00,5-6 hours,4,Often,3,Sometimes,Positive,Always,Often,Slightly,4,Poor
+25.04.2026 20:26:00,5-6 hours,4,Often,2,Sometimes,Neutral,Often,Sometimes,Very,1,Neutral
+25.04.2026 20:34:00,7-8 hours,2,Often,4,Sometimes,Neutral,Sometimes,Rarely,Not at all,4,Poor
+25.04.2026 20:51:00,5-6 hours,3,Rarely,4,Sometimes,Neutral,Rarely,Often,Very,5,Good
+25.04.2026 21:19:00,Less than 5 hours,3,Sometimes,4,Sometimes,Positive,Sometimes,Rarely,Moderately,2,Neutral
+25.04.2026 21:45:00,7-8 hours,3,Often,3,Sometimes,Neutral,Sometimes,Sometimes,Moderately,1,Neutral
+25.04.2026 21:45:00,7-8 hours,3,Always,2,Sometimes,Neutral,Often,Sometimes,Very,3,Good
+25.04.2026 22:08:00,7-8 hours,3,Rarely,2,Sometimes,Neutral,Sometimes,Sometimes,Moderately,3,Neutral
+25.04.2026 22:46:00,7-8 hours,3,Often,3,Often,Sad,Sometimes,Rarely,Moderately,1,Neutral
+25.04.2026 23:09:00,5-6 hours,3,Always,2,Rarely,Neutral,Sometimes,Always,Not at all,5,Poor
+25.04.2026 23:13:00,More than 8 hours,4,Often,3,Often,Neutral,Sometimes,Often,Very,5,Good
+25.04.2026 23:39:00,More than 8 hours,2,Sometimes,1,Sometimes,Sad,Sometimes,Often,Slightly,4,Poor
+26.04.2026 00:09:00,5-6 hours,5,Sometimes,5,Often,Sad,Sometimes,Rarely,Very,4,Very good
+26.04.2026 00:19:00,7-8 hours,3,Sometimes,2,Often,Neutral,Always,Rarely,Slightly,4,Poor
+26.04.2026 00:22:00,7-8 hours,3,Sometimes,3,Rarely,Neutral,Sometimes,Sometimes,Moderately,3,Neutral
+26.04.2026 00:54:00,5-6 hours,3,Often,5,Sometimes,Sad,Rarely,Sometimes,Very,5,Poor
+26.04.2026 01:10:00,7-8 hours,4,Sometimes,3,Rarely,Neutral,Sometimes,Sometimes,Moderately,3,Neutral
+26.04.2026 01:45:00,5-6 hours,4,Never,3,Sometimes,Positive,Sometimes,Sometimes,Slightly,2,Very good
+26.04.2026 01:56:00,7-8 hours,3,Sometimes,2,Sometimes,Sad,Sometimes,Sometimes,Moderately,5,Neutral
+26.04.2026 02:24:00,More than 8 hours,3,Often,2,Rarely,Neutral,Rarely,Rarely,Very,3,Very good
+26.04.2026 02:47:00,5-6 hours,3,Always,2,Sometimes,Neutral,Rarely,Sometimes,Very,3,Neutral
+26.04.2026 03:08:00,7-8 hours,4,Sometimes,4,Never,Sad,Sometimes,Sometimes,Very,5,Neutral
+26.04.2026 03:15:00,More than 8 hours,3,Sometimes,3,Rarely,Positive,Sometimes,Rarely,Very,2,Neutral
+26.04.2026 03:30:00,7-8 hours,3,Often,4,Often,Energized,Rarely,Rarely,Very,2,Neutral
+26.04.2026 03:47:00,Less than 5 hours,2,Always,3,Sometimes,Positive,Always,Always,Very,5,Very poor
+26.04.2026 04:16:00,5-6 hours,4,Often,1,Sometimes,Neutral,Sometimes,Often,Not at all,3,Poor
+26.04.2026 04:41:00,7-8 hours,3,Often,3,Often,Positive,Sometimes,Rarely,Very,3,Neutral
+26.04.2026 04:42:00,7-8 hours,3,Sometimes,4,Sometimes,Neutral,Rarely,Rarely,Moderately,5,Neutral
+26.04.2026 05:04:00,5-6 hours,3,Sometimes,1,Rarely,Neutral,Sometimes,Rarely,Very,3,Neutral
+26.04.2026 05:25:00,7-8 hours,4,Often,3,Sometimes,Neutral,Sometimes,Sometimes,Very,1,Neutral
+26.04.2026 05:53:00,5-6 hours,4,Often,3,Rarely,Neutral,Always,Always,Very,4,Poor
+26.04.2026 06:05:00,7-8 hours,4,Often,3,Often,Neutral,Sometimes,Sometimes,Moderately,3,Neutral
+26.04.2026 06:26:00,7-8 hours,4,Often,4,Sometimes,Sad,Rarely,Rarely,Moderately,4,Neutral
+26.04.2026 06:45:00,7-8 hours,3,Sometimes,4,Often,Positive,Sometimes,Rarely,Very,5,Neutral
+26.04.2026 07:30:00,More than 8 hours,3,Sometimes,1,Often,Sad,Sometimes,Always,Very,3,Very poor
+26.04.2026 07:32:00,More than 8 hours,3,Sometimes,4,Rarely,Sad,Often,Never,Extremely,4,Good
+26.04.2026 08:06:00,5-6 hours,4,Often,1,Often,Neutral,Sometimes,Often,Moderately,5,Very poor
+26.04.2026 08:22:00,7-8 hours,4,Rarely,5,Often,Neutral,Sometimes,Often,Very,4,Good
+26.04.2026 08:29:00,7-8 hours,4,Rarely,2,Often,Neutral,Always,Always,Slightly,5,Very poor
+26.04.2026 09:06:00,7-8 hours,3,Often,5,Often,Positive,Never,Sometimes,Slightly,5,Neutral
+26.04.2026 09:17:00,7-8 hours,5,Rarely,3,Rarely,Positive,Sometimes,Sometimes,Very,4,Neutral
+26.04.2026 09:29:00,7-8 hours,4,Rarely,4,Often,Positive,Sometimes,Never,Very,2,Neutral
+26.04.2026 09:47:00,Less than 5 hours,3,Sometimes,2,Sometimes,Neutral,Sometimes,Rarely,Moderately,2,Good
+26.04.2026 10:05:00,7-8 hours,3,Often,4,Sometimes,Neutral,Often,Rarely,Very,2,Neutral
+26.04.2026 10:43:00,More than 8 hours,3,Often,4,Often,Neutral,Often,Always,Very,5,Poor
+26.04.2026 10:56:00,7-8 hours,3,Sometimes,2,Sometimes,Neutral,Sometimes,Rarely,Moderately,3,Neutral
+26.04.2026 11:18:00,5-6 hours,4,Often,1,Sometimes,Neutral,Often,Often,Moderately,3,Very poor
+26.04.2026 11:20:00,7-8 hours,3,Rarely,2,Rarely,Energized,Always,Rarely,Very,1,Poor
+26.04.2026 12:04:00,7-8 hours,4,Always,3,Often,Neutral,Often,Rarely,Slightly,5,Good
+26.04.2026 12:27:00,5-6 hours,2,Often,2,Often,Sad,Never,Rarely,Slightly,5,Poor
+26.04.2026 12:46:00,5-6 hours,3,Rarely,2,Often,Positive,Rarely,Sometimes,Very,5,Good
+26.04.2026 12:42:00,Less than 5 hours,1,Often,3,Rarely,Neutral,Sometimes,Sometimes,Slightly,5,Very poor
+26.04.2026 13:09:00,5-6 hours,5,Sometimes,3,Often,Positive,Rarely,Often,Extremely,3,Neutral
+26.04.2026 13:37:00,More than 8 hours,4,Always,3,Sometimes,Neutral,Always,Always,Moderately,5,Poor
+26.04.2026 13:44:00,5-6 hours,3,Sometimes,2,Rarely,Positive,Rarely,Rarely,Slightly,3,Neutral
+26.04.2026 14:12:00,5-6 hours,3,Sometimes,5,Often,Neutral,Sometimes,Rarely,Moderately,4,Good
+26.04.2026 14:26:00,7-8 hours,4,Often,2,Rarely,Positive,Sometimes,Often,Moderately,2,Good
+26.04.2026 15:04:00,7-8 hours,3,Sometimes,2,Often,Neutral,Sometimes,Rarely,Very,3,Neutral
+26.04.2026 15:15:00,7-8 hours,4,Often,4,Sometimes,Neutral,Sometimes,Never,Very,4,Neutral
+26.04.2026 15:38:00,7-8 hours,3,Rarely,3,Sometimes,Positive,Sometimes,Sometimes,Very,2,Good
+26.04.2026 16:00:00,7-8 hours,3,Often,3,Rarely,Neutral,Rarely,Often,Extremely,5,Neutral
+26.04.2026 16:02:00,More than 8 hours,4,Often,3,Often,Neutral,Sometimes,Never,Very,3,Good
+26.04.2026 16:39:00,More than 8 hours,4,Never,3,Sometimes,Sad,Sometimes,Sometimes,Moderately,3,Good
+26.04.2026 17:10:00,More than 8 hours,3,Rarely,2,Rarely,Neutral,Sometimes,Rarely,Very,3,Neutral
+26.04.2026 17:22:00,5-6 hours,4,Often,3,Often,Positive,Rarely,Rarely,Very,1,Neutral
+26.04.2026 17:35:00,7-8 hours,3,Sometimes,5,Always,Positive,Always,Sometimes,Very,5,Poor
+26.04.2026 18:09:00,Less than 5 hours,4,Always,2,Rarely,Positive,Sometimes,Always,Moderately,5,Poor
+26.04.2026 18:02:00,5-6 hours,3,Sometimes,4,Sometimes,Neutral,Sometimes,Sometimes,Very,4,Neutral
+26.04.2026 18:31:00,5-6 hours,3,Often,3,Often,Positive,Sometimes,Often,Not at all,2,Very good
+26.04.2026 18:51:00,7-8 hours,3,Rarely,3,Sometimes,Positive,Rarely,Rarely,Slightly,2,Neutral
+26.04.2026 19:04:00,7-8 hours,3,Rarely,1,Rarely,Neutral,Rarely,Rarely,Moderately,3,Neutral
+26.04.2026 19:20:00,5-6 hours,3,Sometimes,4,Often,Sad,Sometimes,Often,Very,3,Very good
+26.04.2026 19:56:00,Less than 5 hours,3,Sometimes,2,Often,Sad,Sometimes,Often,Moderately,2,Poor
+26.04.2026 20:20:00,5-6 hours,3,Often,1,Never,Neutral,Often,Often,Very,4,Poor
+26.04.2026 20:40:00,More than 8 hours,3,Sometimes,5,Rarely,Neutral,Often,Always,Moderately,4,Neutral
+26.04.2026 20:47:00,5-6 hours,3,Often,3,Often,Neutral,Always,Rarely,Very,1,Good
+26.04.2026 21:06:00,7-8 hours,3,Often,4,Often,Neutral,Sometimes,Sometimes,Moderately,4,Good
+26.04.2026 21:22:00,7-8 hours,4,Sometimes,3,Often,Positive,Sometimes,Never,Extremely,4,Good
+26.04.2026 22:09:00,5-6 hours,4,Sometimes,3,Sometimes,Sad,Often,Sometimes,Very,4,Very good
+26.04.2026 22:00:00,5-6 hours,3,Often,3,Sometimes,Neutral,Sometimes,Rarely,Very,4,Neutral
+26.04.2026 22:35:00,5-6 hours,3,Always,2,Often,Neutral,Sometimes,Rarely,Moderately,3,Neutral
+26.04.2026 23:02:00,7-8 hours,3,Never,4,Never,Neutral,Rarely,Often,Extremely,4,Neutral
+26.04.2026 23:10:00,7-8 hours,5,Sometimes,3,Rarely,Neutral,Sometimes,Never,Very,2,Good
+26.04.2026 23:42:00,5-6 hours,3,Often,4,Sometimes,Positive,Sometimes,Rarely,Moderately,1,Good
+27.04.2026 00:10:00,7-8 hours,4,Sometimes,3,Sometimes,Positive,Sometimes,Often,Very,2,Good
+27.04.2026 00:04:00,5-6 hours,2,Sometimes,2,Sometimes,Neutral,Often,Often,Moderately,4,Poor
+27.04.2026 00:49:00,More than 8 hours,3,Sometimes,2,Sometimes,Neutral,Rarely,Rarely,Not at all,1,Good
+27.04.2026 00:56:00,7-8 hours,3,Sometimes,4,Sometimes,Neutral,Sometimes,Often,Moderately,1,Neutral
+27.04.2026 01:24:00,5-6 hours,3,Often,2,Rarely,Sad,Often,Always,Moderately,5,Very poor
+27.04.2026 01:37:00,5-6 hours,3,Often,3,Rarely,Positive,Rarely,Rarely,Very,1,Good
+27.04.2026 02:05:00,5-6 hours,4,Often,2,Often,Neutral,Sometimes,Sometimes,Slightly,3,Very poor
+27.04.2026 02:08:00,7-8 hours,3,Always,3,Sometimes,Positive,Sometimes,Often,Very,1,Good
+27.04.2026 02:21:00,More than 8 hours,5,Rarely,4,Rarely,Positive,Sometimes,Often,Very,3,Neutral
+27.04.2026 02:53:00,5-6 hours,2,Always,3,Sometimes,Neutral,Often,Always,Moderately,4,Poor
+27.04.2026 03:27:00,7-8 hours,4,Sometimes,4,Sometimes,Sad,Sometimes,Rarely,Very,2,Neutral
+27.04.2026 03:30:00,7-8 hours,3,Often,4,Often,Positive,Rarely,Sometimes,Very,1,Good
+27.04.2026 03:54:00,Less than 5 hours,5,Sometimes,3,Sometimes,Neutral,Sometimes,Always,Slightly,5,Poor
+27.04.2026 04:28:00,7-8 hours,3,Sometimes,4,Often,Neutral,Rarely,Rarely,Moderately,1,Good
+27.04.2026 04:34:00,Less than 5 hours,4,Often,5,Sometimes,Neutral,Rarely,Rarely,Very,1,Neutral
+27.04.2026 04:44:00,7-8 hours,4,Often,3,Sometimes,Sad,Sometimes,Sometimes,Moderately,3,Neutral
+27.04.2026 05:29:00,7-8 hours,4,Often,2,Rarely,Positive,Sometimes,Rarely,Extremely,2,Neutral
+27.04.2026 05:22:00,5-6 hours,3,Often,2,Always,Very sad,Often,Always,Slightly,5,Very poor
+27.04.2026 06:00:00,5-6 hours,5,Always,3,Rarely,Neutral,Sometimes,Sometimes,Extremely,5,Very good
+27.04.2026 06:27:00,7-8 hours,3,Often,1,Often,Energized,Rarely,Often,Not at all,3,Poor
+27.04.2026 06:32:00,7-8 hours,4,Sometimes,3,Sometimes,Neutral,Sometimes,Sometimes,Moderately,2,Neutral
+27.04.2026 07:05:00,Less than 5 hours,3,Often,3,Often,Neutral,Sometimes,Often,Extremely,3,Poor
+27.04.2026 07:03:00,7-8 hours,4,Sometimes,4,Sometimes,Neutral,Sometimes,Sometimes,Moderately,5,Neutral
+27.04.2026 07:43:00,5-6 hours,3,Often,4,Sometimes,Neutral,Often,Rarely,Very,3,Neutral
+27.04.2026 08:00:00,5-6 hours,3,Sometimes,3,Sometimes,Neutral,Rarely,Rarely,Very,4,Neutral
+27.04.2026 08:01:00,More than 8 hours,2,Never,3,Often,Neutral,Often,Never,Very,4,Good
+27.04.2026 08:27:00,5-6 hours,3,Sometimes,1,Sometimes,Neutral,Always,Sometimes,Very,5,Poor
+27.04.2026 08:54:00,7-8 hours,3,Sometimes,1,Often,Neutral,Sometimes,Always,Very,3,Poor
+27.04.2026 09:24:00,7-8 hours,4,Sometimes,4,Rarely,Positive,Never,Sometimes,Very,4,Neutral
+27.04.2026 09:44:00,7-8 hours,4,Often,2,Sometimes,Neutral,Sometimes,Never,Extremely,4,Neutral
+27.04.2026 10:08:00,More than 8 hours,3,Often,3,Sometimes,Neutral,Sometimes,Sometimes,Very,3,Neutral
+27.04.2026 10:04:00,5-6 hours,3,Sometimes,4,Sometimes,Positive,Sometimes,Rarely,Slightly,2,Good
+27.04.2026 10:24:00,5-6 hours,3,Sometimes,2,Sometimes,Positive,Sometimes,Rarely,Very,1,Good
+27.04.2026 11:02:00,7-8 hours,2,Often,3,Rarely,Neutral,Sometimes,Sometimes,Very,2,Very good
+27.04.2026 11:12:00,7-8 hours,3,Often,1,Rarely,Neutral,Sometimes,Rarely,Very,3,Very poor
+27.04.2026 11:41:00,7-8 hours,4,Sometimes,2,Often,Sad,Rarely,Often,Very,1,Good
+27.04.2026 11:50:00,5-6 hours,5,Rarely,5,Sometimes,Positive,Sometimes,Rarely,Very,3,Good
+27.04.2026 12:14:00,7-8 hours,1,Often,2,Sometimes,Neutral,Often,Rarely,Slightly,2,Very poor
+27.04.2026 12:36:00,5-6 hours,5,Sometimes,1,Sometimes,Positive,Sometimes,Often,Moderately,3,Neutral
+27.04.2026 12:40:00,5-6 hours,2,Always,3,Rarely,Energized,Often,Always,Extremely,5,Very poor
+27.04.2026 13:08:00,7-8 hours,4,Often,4,Often,Neutral,Often,Rarely,Extremely,5,Neutral
+27.04.2026 13:30:00,7-8 hours,3,Always,1,Often,Positive,Often,Often,Slightly,5,Poor
+27.04.2026 13:49:00,5-6 hours,2,Rarely,3,Never,Neutral,Sometimes,Sometimes,Very,3,Neutral
+27.04.2026 14:27:00,5-6 hours,2,Sometimes,5,Often,Positive,Often,Always,Moderately,5,Neutral
+27.04.2026 14:29:00,5-6 hours,5,Often,2,Often,Neutral,Sometimes,Often,Moderately,5,Poor
+27.04.2026 15:01:00,7-8 hours,3,Sometimes,4,Rarely,Positive,Often,Often,Very,5,Very good
+27.04.2026 15:19:00,5-6 hours,4,Often,3,Rarely,Neutral,Sometimes,Rarely,Moderately,3,Poor
+27.04.2026 15:46:00,7-8 hours,4,Often,3,Rarely,Neutral,Rarely,Rarely,Slightly,1,Neutral
+27.04.2026 15:45:00,More than 8 hours,3,Sometimes,3,Rarely,Neutral,Often,Sometimes,Very,2,Neutral
+27.04.2026 16:09:00,Less than 5 hours,3,Rarely,3,Often,Neutral,Rarely,Often,Extremely,2,Very good
+27.04.2026 16:42:00,Less than 5 hours,5,Rarely,4,Rarely,Neutral,Rarely,Rarely,Very,4,Good
+27.04.2026 16:49:00,5-6 hours,2,Often,2,Often,Very sad,Never,Rarely,Very,5,Poor
+27.04.2026 17:06:00,Less than 5 hours,3,Rarely,3,Sometimes,Neutral,Often,Often,Not at all,4,Very poor
+27.04.2026 17:31:00,5-6 hours,2,Sometimes,2,Often,Neutral,Rarely,Sometimes,Slightly,4,Good
+27.04.2026 18:04:00,7-8 hours,3,Often,4,Sometimes,Neutral,Often,Sometimes,Very,3,Neutral
+27.04.2026 18:22:00,Less than 5 hours,3,Sometimes,3,Always,Neutral,Often,Rarely,Extremely,2,Neutral
+27.04.2026 18:21:00,5-6 hours,5,Often,5,Often,Neutral,Sometimes,Always,Very,2,Poor
+27.04.2026 18:50:00,More than 8 hours,3,Often,1,Sometimes,Neutral,Sometimes,Rarely,Moderately,3,Good
+27.04.2026 19:03:00,More than 8 hours,3,Rarely,3,Sometimes,Neutral,Sometimes,Rarely,Very,3,Neutral
+27.04.2026 19:24:00,5-6 hours,3,Often,2,Always,Neutral,Rarely,Often,Slightly,3,Poor
+27.04.2026 19:49:00,5-6 hours,3,Often,2,Often,Neutral,Often,Rarely,Very,2,Neutral
+27.04.2026 20:06:00,7-8 hours,5,Sometimes,3,Sometimes,Neutral,Rarely,Often,Slightly,4,Neutral
+27.04.2026 20:36:00,More than 8 hours,2,Rarely,4,Often,Neutral,Sometimes,Often,Very,2,Good
+27.04.2026 21:00:00,More than 8 hours,4,Sometimes,3,Sometimes,Energized,Sometimes,Sometimes,Moderately,5,Neutral
+27.04.2026 21:02:00,5-6 hours,3,Rarely,3,Often,Positive,Sometimes,Sometimes,Moderately,3,Neutral
+27.04.2026 21:44:00,7-8 hours,3,Rarely,2,Often,Neutral,Sometimes,Often,Very,4,Neutral
+27.04.2026 22:07:00,5-6 hours,3,Sometimes,4,Often,Neutral,Rarely,Sometimes,Very,5,Neutral
+27.04.2026 22:19:00,5-6 hours,4,Sometimes,3,Rarely,Neutral,Rarely,Sometimes,Extremely,4,Neutral
+27.04.2026 22:27:00,More than 8 hours,4,Often,3,Sometimes,Positive,Sometimes,Sometimes,Extremely,2,Neutral
+27.04.2026 22:41:00,7-8 hours,5,Often,3,Sometimes,Positive,Sometimes,Sometimes,Extremely,3,Neutral
+27.04.2026 23:21:00,7-8 hours,2,Rarely,1,Sometimes,Neutral,Often,Sometimes,Moderately,3,Very poor
+27.04.2026 23:43:00,More than 8 hours,3,Often,3,Sometimes,Neutral,Rarely,Never,Very,3,Good
+27.04.2026 23:46:00,7-8 hours,5,Sometimes,3,Rarely,Positive,Rarely,Rarely,Very,3,Good
+28.04.2026 00:10:00,More than 8 hours,3,Rarely,3,Always,Neutral,Rarely,Rarely,Moderately,5,Neutral
+28.04.2026 00:45:00,7-8 hours,2,Often,3,Sometimes,Positive,Sometimes,Rarely,Slightly,3,Very poor
+28.04.2026 01:06:00,7-8 hours,2,Never,4,Rarely,Positive,Sometimes,Rarely,Very,2,Neutral
+28.04.2026 01:30:00,5-6 hours,3,Often,2,Always,Energized,Sometimes,Always,Moderately,3,Poor
+28.04.2026 01:32:00,Less than 5 hours,3,Always,2,Never,Neutral,Rarely,Sometimes,Very,3,Good
+28.04.2026 01:59:00,Less than 5 hours,5,Sometimes,3,Never,Positive,Sometimes,Rarely,Very,3,Neutral
+28.04.2026 02:20:00,Less than 5 hours,3,Rarely,3,Sometimes,Positive,Sometimes,Often,Very,3,Neutral
+28.04.2026 02:35:00,5-6 hours,3,Sometimes,3,Rarely,Positive,Rarely,Never,Very,2,Very good
+28.04.2026 02:40:00,Less than 5 hours,3,Rarely,3,Sometimes,Positive,Sometimes,Never,Very,5,Good
+28.04.2026 03:09:00,5-6 hours,3,Often,4,Often,Neutral,Sometimes,Rarely,Slightly,5,Good
+28.04.2026 03:24:00,7-8 hours,2,Sometimes,2,Often,Neutral,Sometimes,Always,Slightly,4,Poor
+28.04.2026 03:52:00,7-8 hours,3,Often,4,Sometimes,Sad,Often,Always,Very,2,Poor
+28.04.2026 04:18:00,7-8 hours,3,Sometimes,3,Never,Positive,Sometimes,Always,Moderately,5,Neutral
+28.04.2026 04:21:00,5-6 hours,4,Never,4,Sometimes,Positive,Sometimes,Rarely,Extremely,5,Neutral
+28.04.2026 04:59:00,5-6 hours,4,Sometimes,3,Sometimes,Neutral,Sometimes,Sometimes,Extremely,1,Good
+28.04.2026 05:27:00,5-6 hours,3,Sometimes,3,Sometimes,Sad,Sometimes,Often,Moderately,3,Poor
+28.04.2026 05:34:00,7-8 hours,3,Always,2,Rarely,Neutral,Often,Rarely,Moderately,4,Very poor
+28.04.2026 05:59:00,More than 8 hours,3,Always,2,Often,Neutral,Sometimes,Always,Very,5,Poor
+28.04.2026 06:19:00,7-8 hours,4,Often,2,Often,Neutral,Sometimes,Often,Extremely,2,Neutral
+28.04.2026 06:21:00,More than 8 hours,3,Often,4,Sometimes,Neutral,Rarely,Rarely,Very,2,Good
+28.04.2026 06:50:00,Less than 5 hours,3,Always,3,Often,Neutral,Often,Often,Extremely,2,Poor
+28.04.2026 07:01:00,7-8 hours,3,Sometimes,5,Often,Positive,Sometimes,Rarely,Very,1,Good
+28.04.2026 07:30:00,7-8 hours,3,Always,5,Often,Neutral,Often,Always,Very,1,Neutral
+28.04.2026 08:03:00,7-8 hours,4,Sometimes,3,Sometimes,Neutral,Rarely,Rarely,Very,4,Good
+28.04.2026 08:22:00,7-8 hours,5,Often,3,Sometimes,Sad,Sometimes,Often,Moderately,5,Poor
+28.04.2026 08:46:00,7-8 hours,5,Sometimes,1,Rarely,Neutral,Rarely,Never,Moderately,5,Very good
+28.04.2026 08:44:00,7-8 hours,4,Sometimes,4,Never,Positive,Rarely,Often,Very,5,Good
+28.04.2026 09:07:00,7-8 hours,4,Often,4,Never,Neutral,Sometimes,Often,Very,5,Neutral
+28.04.2026 09:26:00,7-8 hours,4,Often,4,Often,Positive,Sometimes,Sometimes,Very,3,Good
+28.04.2026 09:49:00,7-8 hours,5,Rarely,5,Sometimes,Neutral,Rarely,Rarely,Moderately,2,Good
+28.04.2026 10:14:00,7-8 hours,2,Sometimes,2,Rarely,Positive,Often,Often,Moderately,4,Poor
+28.04.2026 10:30:00,7-8 hours,5,Sometimes,4,Rarely,Neutral,Sometimes,Rarely,Very,4,Neutral
+28.04.2026 11:10:00,7-8 hours,3,Always,3,Always,Very sad,Often,Often,Very,5,Poor
+28.04.2026 11:21:00,More than 8 hours,3,Often,2,Rarely,Positive,Never,Sometimes,Very,3,Neutral
+28.04.2026 11:29:00,More than 8 hours,3,Sometimes,5,Rarely,Positive,Sometimes,Never,Slightly,4,Good
+28.04.2026 11:53:00,7-8 hours,3,Often,4,Sometimes,Neutral,Sometimes,Never,Very,1,Good

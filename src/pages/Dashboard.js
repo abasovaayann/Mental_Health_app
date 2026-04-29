@@ -1,15 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import Sidebar from '../components/Sidebar';
 import { DASHBOARD_QUOTES } from '../data/quotes';
-
-const navItems = [
-  { key: 'home', label: 'Home', icon: 'home', path: '/dashboard' },
-  { key: 'diary', label: 'Diary', icon: 'book_2', path: '/diary' },
-  { key: 'chatbot', label: 'AI Chat', icon: 'chat_bubble', path: '/chatbot' },
-  { key: 'analytics', label: 'Analytics', icon: 'analytics', disabled: true },
-  { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings' },
-];
 
 const DAILY_CHECKIN_FIELDS = [
   { key: 'moodLevel', label: 'Mood Level', icon: 'mood' },
@@ -245,6 +238,7 @@ const Dashboard = () => {
 
   const todayKey = useMemo(() => getDateKey(new Date()), []);
   const todaysSavedCheckin = dailyCheckinHistory[todayKey] || null;
+  const isLockedForToday = !!todaysSavedCheckin;
 
   const isCheckinChanged = useMemo(
     () => !areCheckinsEqual(todaysSavedCheckin, dailyCheckin),
@@ -252,6 +246,10 @@ const Dashboard = () => {
   );
 
   const handleSaveDailyCheckin = async () => {
+    if (isLockedForToday) {
+      return;
+    }
+
     try {
       await api.put('/survey/daily-checkin', {
         checkin_date: todayKey,
@@ -266,6 +264,14 @@ const Dashboard = () => {
       };
       setDailyCheckinHistory(nextHistory);
     } catch (error) {
+      // 409 = backend says today is already checked in. Sync local state.
+      if (error?.response?.status === 409) {
+        setDailyCheckinHistory((prev) => ({
+          ...prev,
+          [todayKey]: prev[todayKey] || dailyCheckin,
+        }));
+        return;
+      }
       console.error('Failed to save daily check-in', error);
     }
   };
@@ -363,75 +369,7 @@ const Dashboard = () => {
 
   return (
     <div className="h-screen overflow-hidden bg-background-light text-text-primary-light dark:bg-background-dark dark:text-text-primary-dark lg:flex">
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
-        />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col justify-between bg-blue-900 px-6 py-6 text-white shadow-2xl transition-transform duration-200 lg:static lg:translate-x-0 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } overflow-y-auto`}
-      >
-        <div className="flex flex-col gap-8">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-3xl">self_improvement</span>
-            <span className="font-display text-xl font-bold tracking-wide">MindTrackAi</span>
-          </div>
-
-          <nav className="flex flex-col gap-2">
-            {navItems.map((item) => {
-              const active = item.path === '/dashboard';
-
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  disabled={item.disabled}
-                  onClick={() => {
-                    if (item.path) {
-                      navigate(item.path);
-                      setSidebarOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${
-                    active
-                      ? 'bg-blue-500/30 text-white'
-                      : item.disabled
-                        ? 'cursor-not-allowed text-blue-200/60'
-                        : 'text-blue-100 hover:bg-white/10'
-                  }`}
-                >
-                  <span className="material-symbols-outlined">{item.icon}</span>
-                  <span>{item.label}</span>
-                  {item.disabled && <span className="ml-auto text-[10px] uppercase tracking-wide">Soon</span>}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="border-t border-blue-800/60 pt-6">
-          <button
-            type="button"
-            onClick={() => navigate('/settings')}
-            className="flex w-full items-center gap-3 rounded-xl p-2 text-left transition hover:bg-white/10"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-300 to-blue-500 font-bold text-blue-950">
-              {(user.firstName?.[0] || 'U').toUpperCase()}
-              {(user.lastName?.[0] || '').toUpperCase()}
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{user.firstName} {user.lastName}</p>
-              <p className="truncate text-xs text-blue-200">View Profile</p>
-            </div>
-          </button>
-        </div>
-      </aside>
+      <Sidebar user={user} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <main className="h-full flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
         <div className="w-full space-y-8">
@@ -550,23 +488,39 @@ const Dashboard = () => {
                       max="100"
                       value={dailyCheckin[field.key]}
                       onChange={(event) => handleCheckinChange(field.key, event.target.value)}
-                      className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-blue-600 dark:bg-slate-700"
+                      disabled={isLockedForToday}
+                      className={`h-2 w-full appearance-none rounded-full bg-slate-200 accent-blue-600 dark:bg-slate-700 ${
+                        isLockedForToday ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                      }`}
                     />
                   </div>
                 ))}
 
+                {isLockedForToday && (
+                  <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300">
+                    <span className="material-symbols-outlined text-sm">lock_clock</span>
+                    You&rsquo;ve already checked in today. Come back tomorrow to log a new entry.
+                  </p>
+                )}
+
                 <button
                   type="button"
                   onClick={handleSaveDailyCheckin}
-                  disabled={!isCheckinChanged}
+                  disabled={isLockedForToday || !isCheckinChanged}
                   className={`mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors ${
-                    isCheckinChanged
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'cursor-not-allowed bg-emerald-500/80'
+                    isLockedForToday
+                      ? 'cursor-not-allowed bg-emerald-500/80'
+                      : isCheckinChanged
+                        ? 'bg-blue-600 hover:bg-blue-700'
+                        : 'cursor-not-allowed bg-slate-400 dark:bg-slate-600'
                   }`}
                 >
-                  <span className="material-symbols-outlined text-base">check_circle</span>
-                  {isCheckinChanged ? "Save today's check-in" : "Today's check-in saved"}
+                  <span className="material-symbols-outlined text-base">{isLockedForToday ? 'check_circle' : 'save'}</span>
+                  {isLockedForToday
+                    ? "Today's check-in saved"
+                    : isCheckinChanged
+                      ? "Save today's check-in"
+                      : 'Adjust the sliders to save'}
                 </button>
               </div>
             </div>

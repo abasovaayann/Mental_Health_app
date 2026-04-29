@@ -1,14 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
-
-const sidebarItems = [
-  { key: 'dashboard', label: 'Dashboard', icon: 'dashboard', path: '/dashboard' },
-  { key: 'diary', label: 'Diary', icon: 'book_5', path: '/diary', active: true },
-  { key: 'insights', label: 'Insights', icon: 'insights' },
-  { key: 'exercises', label: 'Exercises', icon: 'fitness_center' },
-  { key: 'settings', label: 'Settings', icon: 'settings', path: '/settings' },
-];
+import Sidebar from '../components/Sidebar';
 
 const DAILY_PROMPTS = [
   'What happened today that affected your mood the most, and why do you think it stayed with you?',
@@ -171,8 +164,14 @@ const Diary = () => {
   const [recentEntriesModalOpen, setRecentEntriesModalOpen] = useState(false);
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
+  const recognitionRef = useRef(null);
   const audioChunksRef = useRef([]);
   const audioMimeTypeRef = useRef('');
+  const voiceNoteBaseContentRef = useRef('');
+  const browserFinalTranscriptRef = useRef('');
+  const liveTranscriptRef = useRef('');
+  const voiceLanguageRef = useRef('en-US');
+  const isPausedRef = useRef(false);
   const isRecordingRef = useRef(false);
   const timerRef = useRef(null);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -182,6 +181,13 @@ const Diary = () => {
       return false;
     }
     return Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
+  }, []);
+
+  const browserSpeechSupported = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
   }, []);
 
   useEffect(() => {
@@ -232,6 +238,14 @@ const Diary = () => {
 
     loadEntries();
   }, []);
+
+  useEffect(() => {
+    voiceLanguageRef.current = voiceLanguage;
+  }, [voiceLanguage]);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
   useEffect(() => {
     if (!isEditorPage) {
@@ -322,6 +336,13 @@ const Diary = () => {
       }
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (error) {
+          // Ignore abort errors during unmount cleanup.
+        }
       }
     };
   }, []);
@@ -531,6 +552,100 @@ const Diary = () => {
     }
   };
 
+  const composeVoiceNoteContent = (baseContent, voiceText) => {
+    const cleanBase = (baseContent || '').trimEnd();
+    const cleanVoiceText = (voiceText || '').trim();
+    if (!cleanVoiceText) {
+      return cleanBase;
+    }
+    return cleanBase ? `${cleanBase}\n\nVoice note: ${cleanVoiceText}` : `Voice note: ${cleanVoiceText}`;
+  };
+
+  const applyLiveVoiceText = (text) => {
+    const liveText = (text || '').trim();
+    liveTranscriptRef.current = liveText;
+  };
+
+  const stopBrowserRecognition = (useAbort = true) => {
+    const recognition = recognitionRef.current;
+    if (!recognition) {
+      return;
+    }
+
+    try {
+      if (useAbort) {
+        recognition.abort();
+      } else {
+        recognition.stop();
+      }
+    } catch (error) {
+      // Ignore stop/abort race conditions from browser API.
+    }
+  };
+
+  const startBrowserRecognition = () => {
+    if (!browserSpeechSupported) {
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!recognitionRef.current) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        let interimText = '';
+        let finalChunk = '';
+
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const segment = event.results[i][0]?.transcript || '';
+          if (event.results[i].isFinal) {
+            finalChunk += segment;
+          } else {
+            interimText += segment;
+          }
+        }
+
+        if (finalChunk.trim()) {
+          browserFinalTranscriptRef.current = `${browserFinalTranscriptRef.current} ${finalChunk}`.trim();
+          setTranscript(browserFinalTranscriptRef.current);
+        }
+
+        setInterimTranscript(interimText.trim());
+        const mergedLiveText = `${browserFinalTranscriptRef.current} ${interimText}`.trim();
+        applyLiveVoiceText(mergedLiveText);
+      };
+
+      recognition.onerror = (event) => {
+        if (isRecordingRef.current && event.error !== 'aborted') {
+          setRecordingError(`Live speech error: ${event.error}`);
+        }
+      };
+
+      recognition.onend = () => {
+        if (!isRecordingRef.current || isPausedRef.current) {
+          return;
+        }
+        try {
+          recognition.lang = voiceLanguageRef.current;
+          recognition.start();
+        } catch (error) {
+          // Browser may reject rapid restarts; ignore and keep Whisper finalization.
+        }
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    try {
+      recognitionRef.current.lang = voiceLanguageRef.current;
+      recognitionRef.current.start();
+    } catch (error) {
+      // Ignore duplicate start errors if recognition is already active.
+    }
+  };
+
   const stopRecorder = () =>
     new Promise((resolve) => {
       const recorder = mediaRecorderRef.current;
@@ -582,6 +697,9 @@ const Diary = () => {
       setInterimTranscript('');
       setRecordSeconds(0);
       audioChunksRef.current = [];
+      voiceNoteBaseContentRef.current = content;
+      browserFinalTranscriptRef.current = '';
+      liveTranscriptRef.current = '';
     }
 
     try {
@@ -608,10 +726,11 @@ const Diary = () => {
         setRecordingStatus('Ready');
       };
 
-      recorder.start(1000);
       isRecordingRef.current = true;
       setIsRecording(true);
       setIsPaused(false);
+      recorder.start(1000);
+      startBrowserRecognition();
       startTimer();
     } catch (error) {
       setRecordingError('Microphone access was blocked or unavailable.');
@@ -641,6 +760,7 @@ const Diary = () => {
     if (recorder.state === 'recording') {
       recorder.pause();
     }
+    stopBrowserRecognition();
     stopTimer();
   };
 
@@ -658,6 +778,7 @@ const Diary = () => {
     setIsRecording(true);
     setIsPaused(false);
     setRecordingStatus('Listening...');
+    startBrowserRecognition();
     startTimer();
   };
 
@@ -670,7 +791,7 @@ const Diary = () => {
     isRecordingRef.current = false;
     setIsRecording(false);
     setIsPaused(false);
-    setInterimTranscript('');
+    stopBrowserRecognition();
     stopTimer();
     setIsTranscribing(true);
     setRecordingStatus('Transcribing...');
@@ -678,14 +799,11 @@ const Diary = () => {
     try {
       const audioBlob = await stopRecorder();
       const finalVoiceNote = await transcribeRecording(audioBlob);
-      setTranscript(finalVoiceNote);
-      if (finalVoiceNote) {
-        setContent((prev) =>
-          prev.trim()
-            ? `${prev.trim()}\n\nVoice note: ${finalVoiceNote}`
-            : `Voice note: ${finalVoiceNote}`
-        );
-      }
+      const resolvedVoiceNote = finalVoiceNote || liveTranscriptRef.current;
+      setTranscript(resolvedVoiceNote);
+      setInterimTranscript('');
+      applyLiveVoiceText(resolvedVoiceNote);
+      setContent(composeVoiceNoteContent(voiceNoteBaseContentRef.current, resolvedVoiceNote));
       setRecordingStatus('Saved');
     } catch (error) {
       console.error('Failed to transcribe voice note', error);
@@ -704,11 +822,16 @@ const Diary = () => {
       stopMediaStream();
     }
 
+    stopBrowserRecognition();
+
     isRecordingRef.current = false;
     setIsRecording(false);
     setIsPaused(false);
     setTranscript('');
     setInterimTranscript('');
+    browserFinalTranscriptRef.current = '';
+    liveTranscriptRef.current = '';
+    voiceNoteBaseContentRef.current = '';
     setRecordingStatus('Ready');
     setRecordingError('');
     setRecordSeconds(0);
@@ -763,59 +886,19 @@ const Diary = () => {
 
   return (
     <div className="h-screen overflow-hidden bg-background-light text-text-primary-light dark:bg-background-dark dark:text-text-primary-dark lg:flex">
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="Close sidebar"
-          onClick={() => setSidebarOpen(false)}
-          className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
-        />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-72 shrink-0 flex-col justify-between bg-blue-900 px-6 py-6 text-white shadow-2xl transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } overflow-y-auto`}
-      >
-        <div className="flex flex-col gap-8">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-3xl">self_improvement</span>
-            <span className="font-display text-xl font-bold tracking-wide">MindTrackAi</span>
-          </div>
-
-          <nav className="flex flex-col gap-2">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                onClick={() => {
-                  if (item.path) {
-                    navigate(item.path);
-                    setSidebarOpen(false);
-                  }
-                }}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${item.active
-                    ? 'bg-blue-500/30 text-white'
-                    : item.path
-                      ? 'text-blue-100 hover:bg-white/10'
-                      : 'cursor-not-allowed text-blue-200/60'
-                  }`}
-              >
-                <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                <span className="text-sm font-medium">{item.label}</span>
-                {!item.path && <span className="ml-auto text-[10px] uppercase tracking-wide">Soon</span>}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        <button
-          type="button"
-          className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 py-3.5 font-semibold text-white transition-all hover:bg-white/15"
-        >
-          <span className="material-symbols-outlined text-sm font-bold">add</span>
-          <span className="text-sm">New Entry</span>
-        </button>
-      </aside>
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        footerSlot={
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-white/10 py-3.5 font-semibold text-white transition-all hover:bg-white/15"
+          >
+            <span className="material-symbols-outlined text-sm font-bold">add</span>
+            <span className="text-sm">New Entry</span>
+          </button>
+        }
+      />
 
       <main className="custom-scrollbar h-full flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
         <div className="w-full space-y-6">
@@ -1221,8 +1304,8 @@ const Diary = () => {
                     )}
 
                     <div className="flex w-full gap-2">
-                      <button id="startRecording" type="button" onClick={isPaused ? resumeRecording : startRecording} disabled={(isRecording && !isPaused) || !speechSupported || isTranscribing} className="flex-1 rounded-full bg-primary px-3 py-3 text-sm font-bold text-white disabled:opacity-50">
-                        {isPaused ? 'Resume' : 'Start'}
+                      <button id="startRecording" type="button" onClick={startRecording} disabled={isRecording || isPaused || !speechSupported || isTranscribing} className="flex-1 rounded-full bg-primary px-3 py-3 text-sm font-bold text-white disabled:opacity-50">
+                        Start
                       </button>
                       <button id="pauseRecording" type="button" onClick={isPaused ? resumeRecording : pauseRecording} disabled={!isRecording || isTranscribing} className={`flex-1 rounded-full px-3 py-3 text-sm font-bold disabled:opacity-50 ${isPaused ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/40 dark:text-amber-300'}`}>
                         {isPaused ? 'Resume' : 'Pause'}

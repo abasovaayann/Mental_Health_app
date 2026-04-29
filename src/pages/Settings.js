@@ -1,13 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-
-/* ─── Sidebar nav items ─── */
-const NAV_ITEMS = [
-  { key: 'home', label: 'Home', icon: 'home', path: '/dashboard' },
-  { key: 'diary', label: 'Diary', icon: 'book_2', path: '/diary' },
-  { key: 'analytics', label: 'Analytics', icon: 'analytics', disabled: true },
-];
+import Sidebar from '../components/Sidebar';
+import { getStoredTheme, setTheme } from '../theme';
 
 const SETTINGS_SECTIONS = [
   { key: 'profile', label: 'Account & Profile', icon: 'person' },
@@ -135,7 +130,10 @@ const Settings = () => {
   const [exporting, setExporting] = useState(false);
 
   /* ── Appearance ── */
-  const [appearance, setAppearance] = useState(DEFAULT_PREFS.appearance);
+  const [appearance, setAppearance] = useState(() => ({
+    ...DEFAULT_PREFS.appearance,
+    theme: getStoredTheme(),
+  }));
 
   /* ── Diary ── */
   const [diary, setDiary] = useState(DEFAULT_PREFS.diary);
@@ -172,7 +170,13 @@ const Settings = () => {
         const prefs = prefsRes.data || DEFAULT_PREFS;
         setNotif(prefs.notifications || DEFAULT_PREFS.notifications);
         setPrivacy(prefs.privacy || DEFAULT_PREFS.privacy);
-        setAppearance(prefs.appearance || DEFAULT_PREFS.appearance);
+        // Theme is sourced from localStorage (already applied at app boot).
+        // We never override the active theme on Settings entry — the user
+        // only flips it via the Theme buttons below.
+        setAppearance({
+          ...(prefs.appearance || DEFAULT_PREFS.appearance),
+          theme: getStoredTheme(),
+        });
         setDiary(prefs.diary || DEFAULT_PREFS.diary);
         setVoice(prefs.voice || DEFAULT_PREFS.voice);
       } catch {
@@ -184,8 +188,6 @@ const Settings = () => {
 
     loadAll();
   }, [navigate]);
-
-  useEffect(() => { applyTheme(appearance.theme); }, [appearance]);
 
   useEffect(() => {
     if (!prefsLoaded) {
@@ -208,16 +210,6 @@ const Settings = () => {
 
     return () => clearTimeout(timeout);
   }, [prefsLoaded, notif, privacy, appearance, diary, voice]);
-
-  const applyTheme = (theme) => {
-    const root = document.documentElement;
-    if (theme === 'dark') root.classList.add('dark');
-    else if (theme === 'light') root.classList.remove('dark');
-    else {
-      if (window.matchMedia('(prefers-color-scheme: dark)').matches) root.classList.add('dark');
-      else root.classList.remove('dark');
-    }
-  };
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
@@ -305,63 +297,24 @@ const Settings = () => {
       )}
 
       <div className="relative flex min-h-0 flex-1 lg:flex">
-        {/* ── Sidebar ── */}
-        {/* Overlay for mobile */}
-        {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
-
-        <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col justify-between bg-blue-900 px-6 py-6 text-white shadow-2xl transition-transform duration-200 lg:static lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-          <div className="space-y-1">
-            {/* Main nav */}
-            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-blue-200">Navigation</p>
-            {NAV_ITEMS.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                disabled={item.disabled}
-                onClick={() => {
-                  if (item.path) {
-                    navigate(item.path);
-                    setSidebarOpen(false);
-                  }
-                }}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${
-                  item.disabled
-                    ? 'cursor-not-allowed text-blue-200/60'
-                    : 'text-blue-100 hover:bg-white/10'
-                }`}
-              >
-                <span className="material-symbols-outlined">{item.icon}</span>
-                <span>{item.label}</span>
-                {item.disabled && <span className="ml-auto text-[10px] uppercase tracking-wide">Soon</span>}
-              </button>
-            ))}
-
-            {/* Section anchors */}
-            <div className="mt-6">
-              <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-blue-200">Settings</p>
+        <Sidebar user={user} open={sidebarOpen} onClose={() => setSidebarOpen(false)}>
+          <div>
+            <p className="mb-2 px-3 text-[11px] font-bold uppercase tracking-widest text-blue-200">Settings</p>
+            <div className="flex flex-col gap-1">
               {SETTINGS_SECTIONS.map(s => (
-                <button key={s.key} onClick={() => scrollToSection(s.key)}
-                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${activeSection === s.key ? 'bg-blue-500/30 text-white' : 'text-blue-100 hover:bg-white/10'}`}>
-                  <span className="material-symbols-outlined">{s.icon}</span>
-                  {s.label}
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => scrollToSection(s.key)}
+                  className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left font-medium transition-all ${activeSection === s.key ? 'bg-blue-500/30 text-white' : 'text-blue-100 hover:bg-white/10'}`}
+                >
+                  <span className="material-symbols-outlined text-[20px]">{s.icon}</span>
+                  <span className="text-sm font-medium">{s.label}</span>
                 </button>
               ))}
             </div>
           </div>
-
-          {/* User pill */}
-          <div className="mt-auto border-t border-blue-800/60 pt-4">
-            <div className="flex items-center gap-3 px-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-300 to-blue-500 text-sm font-bold text-blue-950">
-                {user.firstName?.[0]}{user.lastName?.[0]}
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">{user.firstName} {user.lastName}</p>
-                <p className="truncate text-xs text-blue-200">{user.email}</p>
-              </div>
-            </div>
-          </div>
-        </aside>
+        </Sidebar>
 
         {/* ── Content ── */}
         <main className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
@@ -504,7 +457,12 @@ const Settings = () => {
                   { value: 'dark', icon: 'dark_mode', label: 'Dark' },
                   { value: 'system', icon: 'computer', label: 'System' },
                 ].map(t => (
-                  <button key={t.value} onClick={() => setAppearance(a => ({ ...a, theme: t.value }))}
+                  <button
+                    key={t.value}
+                    onClick={() => {
+                      setTheme(t.value);
+                      setAppearance(a => ({ ...a, theme: t.value }));
+                    }}
                     className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${appearance.theme === t.value ? 'bg-primary text-white shadow' : 'bg-blue-50 dark:bg-slate-700 text-text-secondary-light dark:text-text-secondary-dark hover:bg-blue-100 dark:hover:bg-slate-600'}`}>
                     <span className="material-symbols-outlined text-[16px]">{t.icon}</span>{t.label}
                   </button>

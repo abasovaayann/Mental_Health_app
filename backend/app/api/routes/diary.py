@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.database import get_db
 from app.models.diary import DiaryEntry
+from app.models.diary_analysis import DiaryEntryAnalysis
 from app.models.user import User
 from app.schemas.diary import (
     DiaryEntryCreate,
@@ -17,10 +18,17 @@ from app.schemas.diary import (
     SpeechToTextResponse,
 )
 from app.utils.dependencies import get_current_user
+from services.analysis_service import analyze_text
 
 router = APIRouter()
 _whisper_model = None
 _whisper_model_name = None
+
+LANGUAGE_MAP = {
+    "en-US": "en",
+    "ru-RU": "ru",
+    "tr-TR": "tr",
+}
 
 
 def _get_whisper_model():
@@ -64,24 +72,43 @@ def _ensure_ffmpeg_on_path():
 
     ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
     ffmpeg_dir = os.path.dirname(ffmpeg_path)
+
+    # On Windows the bundled binary is named ffmpeg-win-*.exe, not ffmpeg.exe.
+    # Whisper calls "ffmpeg" by name, so create a ffmpeg.exe copy if needed.
+    ffmpeg_alias = os.path.join(ffmpeg_dir, "ffmpeg.exe")
+    if not os.path.exists(ffmpeg_alias):
+        import shutil
+        shutil.copy2(ffmpeg_path, ffmpeg_alias)
+
     path_parts = os.environ.get("PATH", "").split(os.pathsep)
     if ffmpeg_dir not in path_parts:
         os.environ["PATH"] = ffmpeg_dir + os.pathsep + os.environ.get("PATH", "")
 
 
 def _transcribe_audio(path: str, language_code: str) -> str:
-    language_map = {
-        "en-US": "en",
-        "ru-RU": "ru",
-        "tr-TR": "tr",
-    }
+    # "auto" → Whisper detects language automatically (requires a multilingual model)
+    if language_code == "auto":
+        if settings.WHISPER_MODEL.endswith(".en"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Auto language detection requires a multilingual model. Set WHISPER_MODEL=base (or small/medium/large).",
+            )
+        _ensure_ffmpeg_on_path()
+        result = _get_whisper_model().transcribe(path, fp16=False)
+        return (result.get("text") or "").strip()
+
+    whisper_language = LANGUAGE_MAP.get(language_code)
+    if not whisper_language:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported language")
+
+    if settings.WHISPER_MODEL.endswith(".en") and whisper_language != "en":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current Whisper model supports only English. Use tiny/base/small/medium/large for multilingual transcription.",
+        )
+
     _ensure_ffmpeg_on_path()
-    model = _get_whisper_model()
-    result = model.transcribe(
-        path,
-        language=language_map.get(language_code),
-        fp16=False,
-    )
+    result = _get_whisper_model().transcribe(path, language=whisper_language, fp16=False)
     return (result.get("text") or "").strip()
 
 
@@ -89,6 +116,47 @@ def _serialize_tags(csv_value: str) -> list[str]:
     if not csv_value:
         return []
     return [tag for tag in csv_value.split(",") if tag]
+
+
+def _save_or_refresh_analysis(db: Session, entry: DiaryEntry) -> None:
+    """Run the local NLP pipeline and upsert the entry's analysis row.
+
+    Inference failures are swallowed: a missing analysis is acceptable
+    fallback (chatbot will degrade to raw-text context), but a broken
+    diary write is not.
+    """
+    try:
+        result = analyze_text(entry.content or "")
+    except Exception as exc:  # pragma: no cover — defensive
+        print(f"[diary-analysis] inference failed for entry {entry.id}: {exc}")
+        return
+
+    existing = (
+        db.query(DiaryEntryAnalysis)
+        .filter(DiaryEntryAnalysis.entry_id == entry.id)
+        .first()
+    )
+
+    if existing:
+        existing.sentiment = result["sentiment"]
+        existing.sentiment_score = result["sentiment_score"]
+        existing.emotion = result["emotion"]
+        existing.emotion_score = result["emotion_score"]
+        existing.mood = result["mood"]
+    else:
+        db.add(
+            DiaryEntryAnalysis(
+                entry_id=entry.id,
+                user_id=entry.user_id,
+                sentiment=result["sentiment"],
+                sentiment_score=result["sentiment_score"],
+                emotion=result["emotion"],
+                emotion_score=result["emotion_score"],
+                mood=result["mood"],
+            )
+        )
+
+    db.commit()
 
 
 def _serialize_entry(entry: DiaryEntry) -> DiaryEntryResponse:
@@ -139,6 +207,8 @@ def create_entry(
     db.commit()
     db.refresh(entry)
 
+    _save_or_refresh_analysis(db, entry)
+
     return _serialize_entry(entry)
 
 
@@ -160,6 +230,8 @@ def update_entry(
 
     clean_tags = [tag.strip().replace("#", "") for tag in payload.tags if tag.strip()]
 
+    content_changed = entry.content != payload.content
+
     entry.entry_date = payload.entry_date
     entry.title = payload.title
     entry.content = payload.content
@@ -169,6 +241,9 @@ def update_entry(
 
     db.commit()
     db.refresh(entry)
+
+    if content_changed:
+        _save_or_refresh_analysis(db, entry)
 
     return _serialize_entry(entry)
 
@@ -220,7 +295,7 @@ async def speech_to_text(
 ):
     del current_user
 
-    allowed_languages = {"en-US", "ru-RU", "tr-TR"}
+    allowed_languages = set(LANGUAGE_MAP.keys()) | {"auto"}
     if language_code not in allowed_languages:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unsupported language")
 

@@ -38,7 +38,7 @@ async def upsert_daily_checkin(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    row = (
+    existing = (
         db.query(DailyCheckin)
         .filter(
             DailyCheckin.user_id == current_user.id,
@@ -47,21 +47,22 @@ async def upsert_daily_checkin(
         .first()
     )
 
-    if row:
-        row.mood_level = payload.mood_level
-        row.sleep_quality = payload.sleep_quality
-        row.energy_level = payload.energy_level
-        row.updated_at = datetime.utcnow()
-    else:
-        row = DailyCheckin(
-            user_id=current_user.id,
-            checkin_date=payload.checkin_date,
-            mood_level=payload.mood_level,
-            sleep_quality=payload.sleep_quality,
-            energy_level=payload.energy_level,
+    if existing:
+        # Daily check-in is intentionally one-shot per day. Once saved, the
+        # row is immutable until the next calendar day.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Daily check-in for this date has already been saved.",
         )
-        db.add(row)
 
+    row = DailyCheckin(
+        user_id=current_user.id,
+        checkin_date=payload.checkin_date,
+        mood_level=payload.mood_level,
+        sleep_quality=payload.sleep_quality,
+        energy_level=payload.energy_level,
+    )
+    db.add(row)
     db.commit()
     db.refresh(row)
     return row
