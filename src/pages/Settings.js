@@ -8,58 +8,9 @@ import { getStoredTheme, setTheme } from '../theme';
 const SETTINGS_SECTIONS = [
   { key: 'profile', label: 'Account & Profile', icon: 'person' },
   { key: 'reminders', label: 'Email Reminders', icon: 'mail_outline' },
-  { key: 'notifications', label: 'Notifications', icon: 'notifications' },
   { key: 'appearance', label: 'Appearance', icon: 'palette' },
-  { key: 'diary', label: 'Diary Settings', icon: 'edit_note' },
-  { key: 'voice', label: 'Voice Support', icon: 'mic' },
   { key: 'privacy', label: 'Privacy & Security', icon: 'shield' },
 ];
-
-const DEFAULT_PREFS = {
-  notifications: {
-    dailyCheckin: true,
-    weeklyReport: true,
-    aiRecommendations: true,
-    diaryReminder: false,
-    reminderTime: '20:00',
-    channelEmail: false,
-    channelInApp: true,
-  },
-  privacy: {
-    biometricLock: false,
-    anonymousResearch: false,
-    sessionTimeout: 30,
-  },
-  appearance: {
-    theme: 'system',
-    language: 'en',
-    fontSize: 16,
-    reduceAnimations: false,
-  },
-  diary: {
-    inputMode: 'text',
-    aiMoodAnalysis: true,
-    autoSave: true,
-    weeklyReportInclude: true,
-  },
-  voice: {
-    micSensitivity: 50,
-    transcriptionLang: 'en',
-    recordingQuality: 'standard',
-  },
-};
-
-/* ─── Toggle ─── */
-const Toggle = ({ checked, onChange, disabled }) => (
-  <button
-    type="button"
-    disabled={disabled}
-    onClick={() => onChange(!checked)}
-    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${checked ? 'bg-primary' : 'bg-gray-300 dark:bg-slate-600'} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-  >
-    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
-  </button>
-);
 
 /* ─── Section wrapper ─── */
 const Section = ({ id, icon, title, desc, children }) => (
@@ -122,65 +73,30 @@ const Settings = () => {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
-  /* ── Notification prefs ── */
-  const [notif, setNotif] = useState(DEFAULT_PREFS.notifications);
-
-  /* ── Privacy ── */
-  const [privacy, setPrivacy] = useState(DEFAULT_PREFS.privacy);
+  /* ── Privacy / delete-account ── */
   const [deleteModal, setDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
   /* ── Appearance ── */
-  const [appearance, setAppearance] = useState(() => ({
-    ...DEFAULT_PREFS.appearance,
-    theme: getStoredTheme(),
-  }));
-
-  /* ── Diary ── */
-  const [diary, setDiary] = useState(DEFAULT_PREFS.diary);
-
-  /* ── Voice ── */
-  const [voice, setVoice] = useState(DEFAULT_PREFS.voice);
+  const [theme, setThemeState] = useState(() => getStoredTheme());
 
   /* ── Init ── */
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (!userData) { navigate('/auth'); return; }
-    localStorage.removeItem('settings_notifications');
-    localStorage.removeItem('settings_privacy');
-    localStorage.removeItem('settings_appearance');
-    localStorage.removeItem('settings_diary');
-    localStorage.removeItem('settings_voice');
     const u = JSON.parse(userData);
     setUser(u);
 
     const loadAll = async () => {
       try {
-        const [meRes, prefsRes] = await Promise.all([
-          api.get('/auth/me'),
-          api.get('/auth/preferences'),
-        ]);
-
+        const meRes = await api.get('/auth/me');
         const d = meRes.data;
         setProfileForm({
           first_name: d.first_name || '', last_name: d.last_name || '',
           age: d.age ?? '', gender: d.gender || '', degree: d.degree || '',
           university: d.university || '', city: d.city || '', country: d.country || '',
         });
-
-        const prefs = prefsRes.data || DEFAULT_PREFS;
-        setNotif(prefs.notifications || DEFAULT_PREFS.notifications);
-        setPrivacy(prefs.privacy || DEFAULT_PREFS.privacy);
-        // Theme is sourced from localStorage (already applied at app boot).
-        // We never override the active theme on Settings entry — the user
-        // only flips it via the Theme buttons below.
-        setAppearance({
-          ...(prefs.appearance || DEFAULT_PREFS.appearance),
-          theme: getStoredTheme(),
-        });
-        setDiary(prefs.diary || DEFAULT_PREFS.diary);
-        setVoice(prefs.voice || DEFAULT_PREFS.voice);
       } catch {
         setProfileForm(f => ({ ...f, first_name: u.firstName || '', last_name: u.lastName || '' }));
       } finally {
@@ -191,27 +107,18 @@ const Settings = () => {
     loadAll();
   }, [navigate]);
 
+  // Sync theme to backend in the background — localStorage is the source of truth
   useEffect(() => {
-    if (!prefsLoaded) {
-      return;
-    }
-
+    if (!prefsLoaded) return;
     const timeout = setTimeout(async () => {
       try {
-        await api.put('/auth/preferences', {
-          notifications: notif,
-          privacy,
-          appearance,
-          diary,
-          voice,
-        });
+        await api.put('/auth/preferences', { appearance: { theme } });
       } catch {
-        // Keep the UI responsive even if background preference save fails.
+        // Theme stays applied locally even if the server save fails.
       }
     }, 450);
-
     return () => clearTimeout(timeout);
-  }, [prefsLoaded, notif, privacy, appearance, diary, voice]);
+  }, [prefsLoaded, theme]);
 
   const showToast = useCallback((msg, type = 'success') => {
     setToast({ msg, type });
@@ -418,45 +325,7 @@ const Settings = () => {
           </Section>
 
           {/* ═══════════════════════════════════════
-             3. NOTIFICATIONS
-             ═══════════════════════════════════════ */}
-          <Section id="section-notifications" icon="notifications" title="Notifications" desc="Choose which alerts and reminders you receive.">
-            <Row label="Daily check-in reminder" desc="Get a reminder to log your mood every day.">
-              <Toggle checked={notif.dailyCheckin} onChange={v => setNotif(n => ({ ...n, dailyCheckin: v }))} />
-            </Row>
-            <Row label="Weekly wellness report" desc="Receive a summary of your week.">
-              <Toggle checked={notif.weeklyReport} onChange={v => setNotif(n => ({ ...n, weeklyReport: v }))} />
-            </Row>
-            <Row label="AI recommendations" desc="Get personalised tips from our AI.">
-              <Toggle checked={notif.aiRecommendations} onChange={v => setNotif(n => ({ ...n, aiRecommendations: v }))} />
-            </Row>
-            <Row label="Diary reminder" desc="A gentle nudge to write in your diary.">
-              <Toggle checked={notif.diaryReminder} onChange={v => setNotif(n => ({ ...n, diaryReminder: v }))} />
-            </Row>
-            <Row label="Reminder time">
-              <input type="time" value={notif.reminderTime} onChange={e => setNotif(n => ({ ...n, reminderTime: e.target.value }))}
-                className="rounded-lg border border-blue-200 dark:border-border-dark bg-white dark:bg-slate-800 text-sm px-3 py-1.5 text-text-primary-light dark:text-text-primary-dark focus:ring-2 focus:ring-primary transition-colors" />
-            </Row>
-
-            <div className="pt-4 border-t border-blue-50 dark:border-border-dark">
-              <p className="text-xs font-bold text-text-secondary-light dark:text-text-secondary-dark uppercase tracking-wide mb-3">Channels</p>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={notif.channelEmail} onChange={e => setNotif(n => ({ ...n, channelEmail: e.target.checked }))}
-                    className="rounded border-blue-300 text-primary focus:ring-primary" />
-                  <span className="text-sm text-text-primary-light dark:text-text-primary-dark">Email</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={notif.channelInApp} onChange={e => setNotif(n => ({ ...n, channelInApp: e.target.checked }))}
-                    className="rounded border-blue-300 text-primary focus:ring-primary" />
-                  <span className="text-sm text-text-primary-light dark:text-text-primary-dark">In-app</span>
-                </label>
-              </div>
-            </div>
-          </Section>
-
-          {/* ═══════════════════════════════════════
-             4. APPEARANCE
+             3. APPEARANCE
              ═══════════════════════════════════════ */}
           <Section id="section-appearance" icon="palette" title="Appearance" desc="Customise how MindTrackAi looks.">
             <Row label="Theme">
@@ -470,122 +339,21 @@ const Settings = () => {
                     key={t.value}
                     onClick={() => {
                       setTheme(t.value);
-                      setAppearance(a => ({ ...a, theme: t.value }));
+                      setThemeState(t.value);
                     }}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${appearance.theme === t.value ? 'bg-primary text-white shadow' : 'bg-blue-50 dark:bg-slate-700 text-text-secondary-light dark:text-text-secondary-dark hover:bg-blue-100 dark:hover:bg-slate-600'}`}>
+                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${theme === t.value ? 'bg-primary text-white shadow' : 'bg-blue-50 dark:bg-slate-700 text-text-secondary-light dark:text-text-secondary-dark hover:bg-blue-100 dark:hover:bg-slate-600'}`}>
                     <span className="material-symbols-outlined text-[16px]">{t.icon}</span>{t.label}
                   </button>
                 ))}
               </div>
             </Row>
-
-            <Row label="Language">
-              <select value={appearance.language} onChange={e => setAppearance(a => ({ ...a, language: e.target.value }))}
-                className="rounded-lg border border-blue-200 dark:border-border-dark bg-white dark:bg-slate-800 text-sm px-3 py-1.5 text-text-primary-light dark:text-text-primary-dark focus:ring-2 focus:ring-primary transition-colors">
-                <option value="en">English</option>
-                <option value="tr">Türkçe</option>
-                <option value="az">Azərbaycan</option>
-              </select>
-            </Row>
-
-            <Row label="Font size" desc={`${appearance.fontSize}px`}>
-              <input type="range" min="12" max="22" step="1" value={appearance.fontSize}
-                onChange={e => setAppearance(a => ({ ...a, fontSize: Number(e.target.value) }))}
-                className="w-32 accent-primary" />
-            </Row>
-
-            <Row label="Reduce animations" desc="Minimise motion for accessibility.">
-              <Toggle checked={appearance.reduceAnimations} onChange={v => setAppearance(a => ({ ...a, reduceAnimations: v }))} />
-            </Row>
           </Section>
 
           {/* ═══════════════════════════════════════
-             5. DIARY SETTINGS
-             ═══════════════════════════════════════ */}
-          <Section id="section-diary" icon="edit_note" title="Diary Settings" desc="Configure your journaling experience.">
-            <Row label="Input mode">
-              <div className="flex gap-2">
-                {[
-                  { value: 'text', icon: 'edit', label: 'Text' },
-                  { value: 'voice', icon: 'mic', label: 'Voice' },
-                  { value: 'both', icon: 'tune', label: 'Both' },
-                ].map(m => (
-                  <button key={m.value} onClick={() => setDiary(d => ({ ...d, inputMode: m.value }))}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${diary.inputMode === m.value ? 'bg-primary text-white shadow' : 'bg-blue-50 dark:bg-slate-700 text-text-secondary-light dark:text-text-secondary-dark hover:bg-blue-100 dark:hover:bg-slate-600'}`}>
-                    <span className="material-symbols-outlined text-[16px]">{m.icon}</span>{m.label}
-                  </button>
-                ))}
-              </div>
-            </Row>
-            <Row label="AI mood analysis" desc="Let AI detect mood from your entries.">
-              <Toggle checked={diary.aiMoodAnalysis} onChange={v => setDiary(d => ({ ...d, aiMoodAnalysis: v }))} />
-            </Row>
-            <Row label="Auto-save drafts" desc="Automatically save while you type.">
-              <Toggle checked={diary.autoSave} onChange={v => setDiary(d => ({ ...d, autoSave: v }))} />
-            </Row>
-            <Row label="Include in weekly report" desc="Add diary summaries to your weekly report.">
-              <Toggle checked={diary.weeklyReportInclude} onChange={v => setDiary(d => ({ ...d, weeklyReportInclude: v }))} />
-            </Row>
-          </Section>
-
-          {/* ═══════════════════════════════════════
-             6. VOICE SUPPORT
-             ═══════════════════════════════════════ */}
-          <Section id="section-voice" icon="mic" title="Voice Support" desc="Adjust microphone and transcription settings.">
-            <Row label="Microphone sensitivity" desc={`${voice.micSensitivity}%`}>
-              <input type="range" min="0" max="100" step="5" value={voice.micSensitivity}
-                onChange={e => setVoice(v => ({ ...v, micSensitivity: Number(e.target.value) }))}
-                className="w-32 accent-primary" />
-            </Row>
-            <Row label="Transcription language">
-              <select value={voice.transcriptionLang} onChange={e => setVoice(v => ({ ...v, transcriptionLang: e.target.value }))}
-                className="rounded-lg border border-blue-200 dark:border-border-dark bg-white dark:bg-slate-800 text-sm px-3 py-1.5 text-text-primary-light dark:text-text-primary-dark focus:ring-2 focus:ring-primary transition-colors">
-                <option value="en">English</option>
-                <option value="tr">Türkçe</option>
-                <option value="az">Azərbaycan</option>
-              </select>
-            </Row>
-            <Row label="Recording quality">
-              <div className="flex gap-2">
-                {[
-                  { value: 'standard', label: 'Standard' },
-                  { value: 'high', label: 'High' },
-                ].map(q => (
-                  <button key={q.value} onClick={() => setVoice(v => ({ ...v, recordingQuality: q.value }))}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${voice.recordingQuality === q.value ? 'bg-primary text-white shadow' : 'bg-blue-50 dark:bg-slate-700 text-text-secondary-light dark:text-text-secondary-dark hover:bg-blue-100 dark:hover:bg-slate-600'}`}>
-                    {q.label}
-                  </button>
-                ))}
-              </div>
-            </Row>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-              <div className="flex items-start gap-3">
-                <span className="material-symbols-outlined text-primary text-[22px] shrink-0 mt-0.5">info</span>
-                <p className="text-xs text-text-secondary-light dark:text-text-secondary-dark">
-                  Voice recordings are processed locally and never stored on our servers. Transcriptions are encrypted end-to-end.
-                </p>
-              </div>
-            </div>
-          </Section>
-
-          {/* ═══════════════════════════════════════
-             7. PRIVACY & SECURITY
+             4. PRIVACY & SECURITY
              ═══════════════════════════════════════ */}
           <Section id="section-privacy" icon="shield" title="Privacy & Security" desc="Control your data and protect your account.">
-            <Row label="Biometric lock" desc="Require fingerprint or Face ID to open the app.">
-              <Toggle checked={privacy.biometricLock} onChange={v => setPrivacy(p => ({ ...p, biometricLock: v }))} />
-            </Row>
-            <Row label="Anonymous research" desc="Contribute anonymised data to mental health research.">
-              <Toggle checked={privacy.anonymousResearch} onChange={v => setPrivacy(p => ({ ...p, anonymousResearch: v }))} />
-            </Row>
-            <Row label="Session timeout" desc="Auto-lock after inactivity (minutes).">
-              <select value={privacy.sessionTimeout} onChange={e => setPrivacy(p => ({ ...p, sessionTimeout: Number(e.target.value) }))}
-                className="rounded-lg border border-blue-200 dark:border-border-dark bg-white dark:bg-slate-800 text-sm px-3 py-1.5 text-text-primary-light dark:text-text-primary-dark focus:ring-2 focus:ring-primary transition-colors">
-                {[5, 15, 30, 60].map(m => <option key={m} value={m}>{m} min</option>)}
-              </select>
-            </Row>
-
-            <div className="pt-4 border-t border-blue-50 dark:border-border-dark flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3">
               <button onClick={handleExportData} disabled={exporting}
                 className="flex items-center gap-2 rounded-xl px-4 py-2 bg-blue-50 dark:bg-blue-900/30 text-primary dark:text-blue-400 text-sm font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors disabled:opacity-50">
                 <span className="material-symbols-outlined text-[18px]">download</span>

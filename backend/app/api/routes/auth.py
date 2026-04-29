@@ -70,36 +70,8 @@ def _cleanup_refresh_replay_state(now_ts: int):
 
 
 DEFAULT_PREFERENCES = {
-    "notifications": {
-        "dailyCheckin": True,
-        "weeklyReport": True,
-        "aiRecommendations": True,
-        "diaryReminder": False,
-        "reminderTime": "20:00",
-        "channelEmail": False,
-        "channelInApp": True,
-    },
-    "privacy": {
-        "biometricLock": False,
-        "anonymousResearch": False,
-        "sessionTimeout": 30,
-    },
     "appearance": {
         "theme": "system",
-        "language": "en",
-        "fontSize": 16,
-        "reduceAnimations": False,
-    },
-    "diary": {
-        "inputMode": "text",
-        "aiMoodAnalysis": True,
-        "autoSave": True,
-        "weeklyReportInclude": True,
-    },
-    "voice": {
-        "micSensitivity": 50,
-        "transcriptionLang": "en",
-        "recordingQuality": "standard",
     },
 }
 

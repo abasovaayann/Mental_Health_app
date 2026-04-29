@@ -97,45 +97,9 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 
-class NotificationPreferences(BaseModel):
-    dailyCheckin: bool
-    weeklyReport: bool
-    aiRecommendations: bool
-    diaryReminder: bool
-    reminderTime: str
-    channelEmail: bool
-    channelInApp: bool
-
-
-class PrivacyPreferences(BaseModel):
-    biometricLock: bool
-    anonymousResearch: bool
-    sessionTimeout: int
-
-
 class AppearancePreferences(BaseModel):
     theme: str
-    language: str
-    fontSize: int
-    reduceAnimations: bool
-
-
-class DiaryPreferences(BaseModel):
-    inputMode: str
-    aiMoodAnalysis: bool
-    autoSave: bool
-    weeklyReportInclude: bool
-
-
-class VoicePreferences(BaseModel):
-    micSensitivity: int
-    transcriptionLang: str
-    recordingQuality: str
 
 
 class UserPreferences(BaseModel):
-    notifications: NotificationPreferences
-    privacy: PrivacyPreferences
     appearance: AppearancePreferences
-    diary: DiaryPreferences
-    voice: VoicePreferences
