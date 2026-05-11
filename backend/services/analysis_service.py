@@ -24,8 +24,10 @@ class DiaryAnalysis(TypedDict):
     mood: str  # "low" | "medium" | "high"
 
 
-# Valence-based emotion → mood mapping. Surprise is ambiguous, so it
-# starts at "medium" and gets pulled toward "high" or "low" by sentiment.
+# Valence-based emotion → mood mapping. The active multilingual emotion
+# model only emits {joy, sadness, anger, fear}; the extra English-model
+# labels (surprise/disgust/neutral) are kept for backward compatibility
+# with cached rows written before the model switch.
 _EMOTION_TO_MOOD = {
     "joy": "high",
     "surprise": "medium",

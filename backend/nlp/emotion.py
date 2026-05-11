@@ -1,9 +1,13 @@
 """
-Multi-class emotion classifier backed by DistilRoBERTa fine-tuned on the
-GoEmotions-derived dataset published by j-hartmann.
+Multilingual emotion classifier backed by MilaNLProc/xlm-emo-t — an
+XLM-T model fine-tuned on the multilingual XLM-EMO dataset.
 
 Output label is one of:
-    joy, sadness, anger, fear, disgust, surprise, neutral
+    joy, sadness, anger, fear
+
+The label set is intentionally smaller than the English-only GoEmotions
+model, but the trade-off is real multilingual coverage (Turkish, Russian,
+English, etc.) instead of garbled output for non-English diary entries.
 """
 
 from __future__ import annotations
@@ -11,7 +15,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import TypedDict
 
-_MODEL_NAME = "j-hartmann/emotion-english-distilroberta-base"
+_MODEL_NAME = "MilaNLProc/xlm-emo-t"
 _MAX_INPUT_CHARS = 1500
 
 
@@ -34,7 +38,6 @@ def predict_emotion(text: str) -> EmotionResult:
 
     truncated = text.strip()[:_MAX_INPUT_CHARS]
     raw = _get_pipeline()(truncated, truncation=True)
-    # `top_k=1` → output shape is [[{label, score}]] for a single input
     best = raw[0][0] if isinstance(raw[0], list) else raw[0]
 
     return {

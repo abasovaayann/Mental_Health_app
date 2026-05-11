@@ -16,40 +16,58 @@ from app.utils.dependencies import get_current_user
 
 router = APIRouter()
 
-SYSTEM_PROMPT = """You are a supportive lifestyle companion integrated into MindTrackAI.
+SYSTEM_PROMPT = """You are a close friend who happens to listen well — warm,
+curious, a little playful, and honest. You live inside MindTrackAI, but you
+never sound like an app. You sound like a person texting back.
 
-Sometimes you will receive diary-entry context gathered from the app. When that
-context is provided, it may include local NLP labels:
-- mood = low | medium | high
-- emotion = joy | sadness | anger | fear | disgust | surprise | neutral
-- sentiment = positive | negative
+How you talk:
+- Reply in the SAME LANGUAGE the user wrote in (Turkish, English, Russian, etc.).
+- Match their energy. Short messages get short replies. A casual "hey" gets a
+  casual "hey" back, not a wall of text.
+- Default length: 2-4 sentences. Go longer only when the user actually wants to
+  unpack something.
+- Use natural contractions, occasional questions, and the kind of small phrases
+  a real friend would ("ah okay", "fair enough", "that's rough", "tamam anladım",
+  "olur böyle şeyler").
+- No bullet lists, no headers, no clinical phrasing, no "as an AI" disclaimers.
+- Never start with "I'm sorry to hear that" — it reads like a script.
 
-Important behavior:
-- If diary context is provided, use it carefully and treat those labels as
-  factual observations about the user's writing.
-- If diary context is NOT provided, behave like a normal supportive chatbot and
-  do NOT bring up diary entries on your own.
-- Never pretend you analyzed entries if no diary context was supplied for this
-  turn.
+Diary context:
+- Sometimes you'll receive a context block with the user's diary entries plus
+  NLP labels: mood (low/medium/high), emotion (joy/sadness/anger/fear and a few
+  legacy labels), sentiment (positive/neutral/negative).
+- Treat those labels as observations about the *writing*, not the person. They
+  can be wrong. Reference them gently, like "looking at the past few entries,
+  things felt heavier on Tuesday" — not "your dominant emotion is sadness".
+- If no diary context is in this turn's prompt, do NOT invent one. Don't talk
+  about "your entries" or "your week" unless the context block is right there.
 
-Your role:
-- Be warm, curious, supportive, and non-judgmental
-- Answer normal conversation naturally when the user is chatting casually
-- When diary context is present, you may observe recurring themes, emotions,
-  and patterns across entries
-- Suggest hobbies, activities, and daily-habit ideas grounded in what the user
-  shares
+Boundaries (apply naturally, don't lecture):
+- You're a friend, not a doctor. Don't diagnose, don't prescribe, don't talk
+  about medications or clinical treatment.
+- If someone sounds like they're in crisis (self-harm, suicide), stay calm,
+  acknowledge them, and gently mention that talking to a crisis line or someone
+  they trust in person can help right now. Don't moralize.
+- You can suggest lifestyle stuff (walks, sleep, a hobby, calling a friend) when
+  it fits — but only when it fits, not as a checklist after every message.
 
-STRICT BOUNDARIES:
-- You are NOT a doctor, therapist, or medical professional
-- Do NOT provide medical advice, diagnoses, or treatment recommendations
-- Do NOT suggest medications or clinical interventions
-- Focus on supportive conversation, lifestyle ideas, habits, and observable
-  patterns
-- Keep responses concise (3-5 sentences) unless the user asks for more detail
-- Always respond in the SAME LANGUAGE as the user's message
-- If the user asks for diary analysis but no entries exist for the requested
-  period, kindly say there is nothing to analyze yet"""
+Examples of the tone you're aiming for:
+
+User: hey
+You: hey :) what's going on?
+
+User: bugün berbattım iş çok stresliydi
+You: ay be, kötüymüş. Ne oldu, biri mi sinirini bozdu yoksa iş yığıldı mı üstüne?
+
+User: can you analyze my week?
+You: Sure — looking at the last few entries, Monday and Tuesday felt heavier
+(a lot of "tired" language, low mood signal), then things lifted a bit by
+Thursday. Want me to dig into a specific day or just talk about the pattern?
+
+User: i think nobody likes me
+You: That's a heavy thing to be carrying around. What's bringing it up today —
+something specific happen, or has it been building?
+"""
 
 _ANALYSIS_HINT_WORDS = {
     "analyze",
@@ -98,20 +116,7 @@ _ANALYSIS_HINT_PHRASES = (
     "my week",
 )
 
-_GREETING_WORDS = {
-    "hi",
-    "hello",
-    "hey",
-    "hey there",
-    "hiya",
-    "merhaba",
-    "selam",
-    "selamlar",
-    "привет",
-    "здравствуй",
-    "здравствуйте",
-    "добрый день",
-}
+CHAT_HISTORY_TURNS = 8  # how many prior user+assistant messages to send to Gemini
 
 
 class ChatRequest(BaseModel):
@@ -183,32 +188,6 @@ def _normalize_message(message: str) -> str:
     return " ".join((message or "").strip().lower().split())
 
 
-def _is_greeting_message(message: str) -> bool:
-    normalized = _normalize_message(message)
-    if not normalized:
-        return False
-
-    if normalized in _GREETING_WORDS:
-        return True
-
-    words = normalized.replace("!", " ").replace("?", " ").replace(",", " ").split()
-    return len(words) <= 4 and bool(words) and (
-        " ".join(words) in _GREETING_WORDS or words[0] in _GREETING_WORDS
-    )
-
-
-def _build_greeting_response(message: str) -> str:
-    normalized = _normalize_message(message)
-
-    if any(token in normalized for token in ("merhaba", "selam")):
-        return "Merhaba! Buradayım. İstersen sadece sohbet edebiliriz ya da aklındaki bir konuda sana yardımcı olabilirim."
-
-    if any(token in normalized for token in ("привет", "здравствуй", "здравствуйте", "добрый")):
-        return "Привет! Я рядом. Можем просто поговорить, или ты можешь написать, с чем хочешь помочь."
-
-    return "Hi! I'm here with you. We can just chat, or you can tell me what you'd like help with."
-
-
 def _build_context(
     entries: list[DiaryEntry],
     analyses: dict[int, DiaryEntryAnalysis],
@@ -260,6 +239,41 @@ def _build_prompt(message: str, context: Optional[str]) -> str:
         "Reply like a normal supportive chatbot.\n\n"
         f"User message: {message}"
     )
+
+
+def _load_chat_history(
+    db: Session, *, user_id: int, session_id: int, limit: int
+) -> list[dict]:
+    """Build a Gemini-compatible history list from the last N messages.
+
+    Gemini expects alternating user/model turns. We exclude the just-saved
+    user message (it goes in send_message), and we drop the latest turn
+    if it would leave history ending on a user role.
+    """
+    rows = (
+        db.query(ChatMessage)
+        .filter(
+            ChatMessage.user_id == user_id,
+            ChatMessage.session_id == session_id,
+        )
+        .order_by(ChatMessage.created_at.desc())
+        .limit(limit * 2 + 1)
+        .all()
+    )
+    rows = list(reversed(rows))
+
+    if rows and rows[-1].role == "user":
+        rows = rows[:-1]
+
+    history: list[dict] = []
+    for row in rows:
+        role = "user" if row.role == "user" else "model"
+        text = (row.content or "").strip()
+        if not text:
+            continue
+        history.append({"role": role, "parts": [text]})
+
+    return history
 
 
 def _is_turkish_message(message: str) -> bool:
@@ -328,6 +342,39 @@ def _build_lifestyle_suggestion(
     )
 
 
+_MOOD_PHRASES_EN = {
+    "low": "things felt pretty heavy",
+    "medium": "things were kind of in-between",
+    "high": "things felt lighter overall",
+}
+
+_MOOD_PHRASES_TR = {
+    "low": "genel olarak ağır geçmiş gibi",
+    "medium": "çok ne iyi ne kötü, ortada gibi",
+    "high": "aslında daha rahat hissetmişsin gibi",
+}
+
+_EMOTION_PHRASES_EN = {
+    "sadness": "a lot of sad-leaning moments",
+    "anger": "some real frustration coming through",
+    "fear": "a bit of anxiety in there",
+    "joy": "some genuinely good moments",
+    "surprise": "a few things that caught you off guard",
+    "disgust": "some stuff you weren't a fan of",
+    "neutral": "a pretty even tone",
+}
+
+_EMOTION_PHRASES_TR = {
+    "sadness": "biraz hüzünlü anlar",
+    "anger": "gerçekten sinirlendiğin şeyler",
+    "fear": "biraz kaygı",
+    "joy": "güzel anlar da var",
+    "surprise": "seni şaşırtan birkaç şey",
+    "disgust": "hoşuna gitmeyen bazı şeyler",
+    "neutral": "daha durağan bir ton",
+}
+
+
 def _build_diary_fallback_response(
     message: str,
     entries: list[DiaryEntry],
@@ -337,66 +384,65 @@ def _build_diary_fallback_response(
 
     if not entries:
         return (
-            "Bu donem icin analiz edebilecegim bir diary entry bulamadim. Birkac entry eklendikten sonra sana ozet ve pattern cikarmaya yardimci olabilirim."
+            "Bu zaman aralığında bakabileceğim bir diary girişi göremiyorum. Birkaç tane yazınca dönüp birlikte üstünden geçebiliriz."
             if turkish
-            else "I do not have any diary entries for that period yet, so there is nothing to summarize right now. Once you add a few entries, I can help spot patterns."
+            else "I can't see any diary entries for that period yet. Once you've jotted a few down we can look at them together."
         )
 
     mood_counts: dict[str, int] = {}
     emotion_counts: dict[str, int] = {}
-    sentiment_counts: dict[str, int] = {}
 
     for entry in entries:
         analysis = analyses.get(entry.id)
         mood_value = (analysis.mood if analysis and analysis.mood else entry.mood or "").strip().lower()
         emotion_value = (analysis.emotion if analysis and analysis.emotion else "").strip().lower()
-        sentiment_value = (analysis.sentiment if analysis and analysis.sentiment else "").strip().lower()
 
         if mood_value:
             mood_counts[mood_value] = mood_counts.get(mood_value, 0) + 1
         if emotion_value:
             emotion_counts[emotion_value] = emotion_counts.get(emotion_value, 0) + 1
-        if sentiment_value:
-            sentiment_counts[sentiment_value] = sentiment_counts.get(sentiment_value, 0) + 1
 
     dominant_mood = _pick_top_label(mood_counts)
     dominant_emotion = _pick_top_label(emotion_counts)
-    dominant_sentiment = _pick_top_label(sentiment_counts)
-    recent_titles = [entry.title or "Untitled" for entry in entries[:2]]
     suggestion = _build_lifestyle_suggestion(dominant_mood, dominant_emotion, turkish)
 
-    if turkish:
-        parts = [
-            f"Son {len(entries)} entry'ye gore genel olarak tekrar eden bir tema gorunuyor."
-        ]
-        if dominant_mood:
-            parts.append(f"En baskin mood: {dominant_mood}.")
-        if dominant_emotion:
-            parts.append(f"En sik emotion: {dominant_emotion}.")
-        if dominant_sentiment:
-            parts.append(f"Genel sentiment daha cok {dominant_sentiment} tarafinda.")
-        if recent_titles:
-            parts.append(f"One cikan basliklar: {', '.join(recent_titles)}.")
-        parts.append(suggestion)
-        return " ".join(parts)
+    mood_phrase = (
+        (_MOOD_PHRASES_TR if turkish else _MOOD_PHRASES_EN).get(dominant_mood or "")
+    )
+    emotion_phrase = (
+        (_EMOTION_PHRASES_TR if turkish else _EMOTION_PHRASES_EN).get(dominant_emotion or "")
+    )
 
-    parts = [f"Looking across your last {len(entries)} entries, there is a recurring pattern in how you have been feeling."]
-    if dominant_mood:
-        parts.append(f"The strongest mood signal is {dominant_mood}.")
-    if dominant_emotion:
-        parts.append(f"The most frequent emotion label is {dominant_emotion}.")
-    if dominant_sentiment:
-        parts.append(f"Overall sentiment leans more {dominant_sentiment}.")
-    if recent_titles:
-        parts.append(f"Recent entries like {', '.join(recent_titles)} help reinforce that pattern.")
-    parts.append(suggestion)
-    return " ".join(parts)
+    if turkish:
+        opener = f"Şu sıralar yazdıklarına baktım"
+        body_bits: list[str] = []
+        if mood_phrase:
+            body_bits.append(mood_phrase)
+        if emotion_phrase:
+            body_bits.append(emotion_phrase)
+        if body_bits:
+            opener += " — " + ", ".join(body_bits) + "."
+        else:
+            opener += "."
+        return f"{opener} {suggestion}"
+
+    opener = "I had a look at the last few entries"
+    body_bits = []
+    if mood_phrase:
+        body_bits.append(mood_phrase)
+    if emotion_phrase:
+        body_bits.append(emotion_phrase)
+    if body_bits:
+        opener += " — " + ", and ".join(body_bits) + "."
+    else:
+        opener += "."
+    return f"{opener} {suggestion}"
 
 
 def _build_general_fallback_response(message: str) -> str:
     if _is_turkish_message(message):
-        return "Su anda AI servisine ulasamiyorum ama buradayim. Istersen kisa ve net yaz; ben de elimden geldigi kadar destek olayim."
-    return "I cannot reach the AI service right now, but I am still here with you. If you want, send a shorter message and I will do my best to help."
+        return "Şu an AI tarafına bağlanamadım ama buradayım. Yazmaya devam edebilirsin, biraz sonra tekrar dener misin?"
+    return "I can't reach the AI side right now, but I'm still here. Want to try again in a moment?"
 
 
 @router.get("/sessions", response_model=ChatSessionListResponse)
@@ -597,31 +643,25 @@ def chat(
     db.commit()
 
     try:
-        if not include_diary_context and _is_greeting_message(payload.message):
-            ai_text = _build_greeting_response(payload.message)
-            db.add(
-                ChatMessage(
-                    user_id=current_user.id,
-                    session_id=payload.session_id,
-                    role="assistant",
-                    content=ai_text,
-                    mode=payload.mode,
-                )
-            )
-            db.commit()
-            return ChatResponse(response=ai_text, used_analysis_memory=False)
-
         import google.generativeai as genai
 
         if not settings.GEMINI_API_KEY:
             raise RuntimeError("GEMINI_API_KEY is not configured.")
+
+        history = _load_chat_history(
+            db,
+            user_id=current_user.id,
+            session_id=payload.session_id,
+            limit=CHAT_HISTORY_TURNS,
+        )
 
         genai.configure(api_key=settings.GEMINI_API_KEY)
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash",
             system_instruction=SYSTEM_PROMPT,
         )
-        result = model.generate_content(
+        chat_session_obj = model.start_chat(history=history)
+        result = chat_session_obj.send_message(
             _build_prompt(payload.message, context),
             request_options={"timeout": 30},
         )

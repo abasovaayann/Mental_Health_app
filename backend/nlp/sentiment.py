@@ -1,10 +1,11 @@
 """
-Binary sentiment classifier (positive / negative) backed by DistilBERT
-fine-tuned on SST-2.
+Multilingual sentiment classifier (positive / neutral / negative) backed by
+the cardiffnlp XLM-RoBERTa model trained on Twitter data in 8+ languages
+(English, Turkish, Russian, Spanish, French, Arabic, Hindi, Portuguese).
 
 The first call lazily downloads the weights to ~/.cache/huggingface and
-keeps the pipeline in memory. Subsequent calls run on CPU in ~50 ms for
-short diary entries.
+keeps the pipeline in memory. Subsequent calls run on CPU in ~80-120 ms
+for short diary entries.
 """
 
 from __future__ import annotations
@@ -12,12 +13,12 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import TypedDict
 
-_MODEL_NAME = "distilbert-base-uncased-finetuned-sst-2-english"
+_MODEL_NAME = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 _MAX_INPUT_CHARS = 1500
 
 
 class SentimentResult(TypedDict):
-    label: str  # "positive" | "negative" | "neutral"
+    label: str  # "positive" | "neutral" | "negative"
     score: float  # 0.0 - 1.0
 
 
