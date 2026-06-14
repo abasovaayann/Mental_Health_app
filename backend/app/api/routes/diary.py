@@ -18,7 +18,7 @@ from app.schemas.diary import (
     SpeechToTextResponse,
 )
 from app.utils.dependencies import get_current_user
-from services.analysis_service import analyze_text
+from app.services.analysis_service import analyze_text
 
 router = APIRouter()
 _whisper_model = None

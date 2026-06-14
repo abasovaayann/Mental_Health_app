@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import TypedDict
 
-from nlp.emotion import predict_emotion
-from nlp.sentiment import predict_sentiment
+from app.nlp.emotion import predict_emotion
+from app.nlp.sentiment import predict_sentiment
 
 
 class DiaryAnalysis(TypedDict):

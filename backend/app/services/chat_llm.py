@@ -13,7 +13,7 @@ from app.config import settings
 from app.models.chat_message import ChatMessage
 from app.models.diary import DiaryEntry
 from app.models.diary_analysis import DiaryEntryAnalysis
-from nlp.language import LANG_NAMES, detect_language
+from app.nlp.language import LANG_NAMES, detect_language
 
 CHAT_HISTORY_TURNS = 8  # how many prior user+assistant messages to send to Claude
 

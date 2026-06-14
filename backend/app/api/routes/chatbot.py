@@ -29,9 +29,9 @@ from app.schemas.chat import (
     ChatSessionListResponse,
 )
 from app.utils.dependencies import get_current_user
-from services.chat_context import build_comparison_context, build_context
-from services.chat_intent import detect_comparison_intent, should_use_diary_context
-from services.chat_llm import (
+from app.services.chat_context import build_comparison_context, build_context
+from app.services.chat_intent import detect_comparison_intent, should_use_diary_context
+from app.services.chat_llm import (
     CHAT_HISTORY_TURNS,
     build_diary_fallback_response,
     build_general_fallback_response,

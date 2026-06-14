@@ -7,8 +7,8 @@ weights or runs a model.
 
 import pytest
 
-from services import analysis_service
-from services.analysis_service import _derive_mood, analyze_text
+from app.services import analysis_service
+from app.services.analysis_service import _derive_mood, analyze_text
 
 pytestmark = pytest.mark.unit
 

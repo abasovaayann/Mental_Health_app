@@ -5,7 +5,7 @@ import pytz
 from sqlalchemy.orm import Session
 from app.models.reminder import UserReminder
 from app.models.user import User
-from services.email_service import get_email_service
+from app.services.email_service import get_email_service
 import logging
 
 logger = logging.getLogger(__name__)

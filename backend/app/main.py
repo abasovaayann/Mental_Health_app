@@ -108,7 +108,7 @@ async def startup_event():
     """Start background reminder task on app startup."""
     import asyncio
     from app.database import SessionLocal
-    from services.reminder_service import ReminderService
+    from app.services.reminder_service import ReminderService
     
     async def check_reminders_periodically():
         """Check and send reminders every hour."""

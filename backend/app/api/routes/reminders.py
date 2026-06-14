@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 from app.utils.dependencies import get_current_user
-from services.reminder_service import ReminderService
+from app.services.reminder_service import ReminderService
 
 router = APIRouter()
 

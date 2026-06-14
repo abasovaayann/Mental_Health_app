@@ -8,7 +8,7 @@ from datetime import date
 
 import pytest
 
-from services.chat_intent import (
+from app.services.chat_intent import (
     detect_comparison_intent as _detect_comparison_intent,
     should_use_diary_context as _should_use_diary_context,
 )

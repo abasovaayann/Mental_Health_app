@@ -6,7 +6,7 @@ nlp/language.py (extracted from the chatbot route in Phase 2).
 
 import pytest
 
-from nlp.language import (
+from app.nlp.language import (
     detect_language as _detect_language,
     is_russian_message as _is_russian_message,
     is_turkish_message as _is_turkish_message,

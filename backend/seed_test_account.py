@@ -34,7 +34,7 @@ from app.models.diary import DiaryEntry  # noqa: E402
 from app.models.diary_analysis import DiaryEntryAnalysis  # noqa: E402
 from app.models.user import User  # noqa: E402
 from app.utils.auth import get_password_hash  # noqa: E402
-from services.analysis_service import analyze_text  # noqa: E402
+from app.services.analysis_service import analyze_text  # noqa: E402
 
 
 TEST_EMAIL = "testuser@mindtrack.dev"
