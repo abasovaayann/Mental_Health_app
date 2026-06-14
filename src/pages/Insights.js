@@ -38,6 +38,33 @@ const getAudioMimeType = () => {
   return candidates.find((t) => MediaRecorder.isTypeSupported(t)) || '';
 };
 
+// Renders **bold** and *italic* markdown emphasis while leaving newlines
+// and other punctuation alone. The double-asterisk split runs first so that
+// **bold** never gets eaten by the single-asterisk italic pattern.
+const renderRichText = (text) => {
+  if (!text) return null;
+  const boldParts = text.split(/(\*\*[^*\n]+\*\*)/g);
+  return boldParts.flatMap((boldPart, boldIdx) => {
+    if (boldPart.startsWith('**') && boldPart.endsWith('**')) {
+      return <strong key={`b-${boldIdx}`}>{boldPart.slice(2, -2)}</strong>;
+    }
+    // For non-bold segments, split out single-asterisk italics.
+    const italicParts = boldPart.split(/(\*[^*\n]+\*)/g);
+    return italicParts.map((italicPart, italicIdx) => {
+      if (
+        italicPart.startsWith('*') &&
+        italicPart.endsWith('*') &&
+        italicPart.length > 2
+      ) {
+        return <em key={`b-${boldIdx}-i-${italicIdx}`}>{italicPart.slice(1, -1)}</em>;
+      }
+      return (
+        <React.Fragment key={`b-${boldIdx}-t-${italicIdx}`}>{italicPart}</React.Fragment>
+      );
+    });
+  });
+};
+
 const Insights = () => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -311,7 +338,7 @@ const Insights = () => {
         footerSlot={
           <div className="rounded-2xl bg-white/10 px-4 py-3">
             <p className="text-[11px] text-blue-200">
-              AI Companion analyzes your diary entries to suggest lifestyle patterns and activities — not medical advice.
+              Aura analyzes your diary entries to suggest lifestyle patterns and activities.
             </p>
           </div>
         }
@@ -328,11 +355,7 @@ const Insights = () => {
             >
               <span className="material-symbols-outlined">menu</span>
             </button>
-            <h1 className="font-display text-lg font-black text-slate-800 dark:text-white">AI Companion</h1>
-            <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200/60 bg-slate-50 px-4 py-1.5 dark:border-slate-700/60 dark:bg-slate-800/60">
-              <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-              <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400">Online</span>
-            </div>
+            <h1 className="font-display text-lg font-black text-slate-800 dark:text-white">Aura</h1>
           </div>
           <button
             type="button"
@@ -438,11 +461,6 @@ const Insights = () => {
 
           {/* Active chat window */}
           <section className="relative flex flex-1 flex-col overflow-hidden bg-white dark:bg-slate-950">
-            {/* Decorative watermark */}
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden opacity-5 dark:opacity-[0.04]">
-              <span className="material-symbols-outlined" style={{ fontSize: 400 }}>bubble_chart</span>
-            </div>
-
             {/* Messages */}
             <div className="custom-scrollbar relative z-10 flex-1 space-y-6 overflow-y-auto p-6 md:p-8">
               {messages.length === 0 && !loading && (
@@ -455,7 +473,7 @@ const Insights = () => {
                       {currentSession ? 'Start typing or pick a suggestion' : 'Start a conversation'}
                     </h2>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                      I'll analyze your diary entries — themes, mood patterns, and activity ideas. Lifestyle insights only, not medical advice.
+                      I'll look through your diary — themes, mood patterns, and activity ideas. Ask me anything.
                     </p>
                   </div>
                 </div>
@@ -469,10 +487,10 @@ const Insights = () => {
                     </div>
                     <div className="space-y-1">
                       <div className="rounded-2xl rounded-bl-none border border-slate-200/40 bg-slate-50 p-4 shadow-sm dark:border-slate-700/40 dark:bg-slate-800">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-100">{msg.text}</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800 dark:text-slate-100">{renderRichText(msg.text)}</p>
                       </div>
                       <span className="ml-1 text-[10px] font-medium uppercase text-slate-500 dark:text-slate-400">
-                        AI Companion{msg.time ? ` • ${formatTime(msg.time)}` : ''}
+                        Aura{msg.time ? ` • ${formatTime(msg.time)}` : ''}
                       </span>
                     </div>
                   </div>
@@ -483,7 +501,7 @@ const Insights = () => {
                     </div>
                     <div className="space-y-1 text-right">
                       <div className="rounded-2xl rounded-br-none bg-blue-600 p-4 text-white shadow-md">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{msg.text}</p>
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed">{renderRichText(msg.text)}</p>
                       </div>
                       <span className="mr-1 text-[10px] font-medium uppercase text-slate-500 dark:text-slate-400">
                         You{msg.time ? ` • ${formatTime(msg.time)}` : ''}
@@ -586,9 +604,6 @@ const Insights = () => {
                 </button>
               </div>
 
-              <p className="mt-4 text-center text-[10px] font-medium uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400">
-                Lifestyle insights only — not a medical diagnosis tool.
-              </p>
             </div>
           </section>
         </main>

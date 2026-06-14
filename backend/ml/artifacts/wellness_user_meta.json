@@ -1,10 +1,13 @@
 {
   "model_name": "wellness_user_rf",
-  "samples": 485,
+  "real_samples": 485,
+  "mock_samples": 400,
+  "samples": 885,
   "at_risk_samples": 139,
   "not_at_risk_samples": 346,
+  "mock_at_risk_samples": 250,
+  "mock_not_at_risk_samples": 150,
   "feature_names": [
-    "sleep_duration",
     "academic_pressure",
     "financial_stress",
     "study_motivation",
@@ -13,43 +16,51 @@
     "morning_mood",
     "emotional_low",
     "anxiety_level",
-    "social_support"
+    "social_support",
+    "sleep_lt5",
+    "sleep_5_6",
+    "sleep_7_8",
+    "sleep_gt8",
+    "sleep_other"
   ],
-  "cv_f1_scores": [
-    0.6545,
-    0.7419,
-    0.7077,
-    0.6429,
-    0.8214
-  ],
-  "cv_f1_mean": 0.7137,
-  "cv_f1_std": 0.0647,
-  "train_accuracy": 0.9237,
-  "classification_report": {
+  "best_params": {
+    "n_estimators": 600,
+    "min_samples_split": 10,
+    "min_samples_leaf": 2,
+    "max_features": 0.5,
+    "max_depth": null
+  },
+  "search_cv_f1_mean": 0.7571,
+  "oof_f1_at_0_5": 0.7569,
+  "oof_f1_at_optimal": 0.764,
+  "optimal_threshold": 0.5048,
+  "train_accuracy": 0.9141,
+  "classification_report_oof_tuned": {
     "Not at risk": {
-      "precision": 0.9753846153846154,
-      "recall": 0.9161849710982659,
-      "f1-score": 0.9448584202682563,
+      "precision": 0.9470198675496688,
+      "recall": 0.8265895953757225,
+      "f1-score": 0.8827160493827161,
       "support": 346.0
     },
     "At risk": {
-      "precision": 0.81875,
-      "recall": 0.9424460431654677,
-      "f1-score": 0.8762541806020067,
+      "precision": 0.6721311475409836,
+      "recall": 0.8848920863309353,
+      "f1-score": 0.7639751552795031,
       "support": 139.0
     },
-    "accuracy": 0.9237113402061856,
+    "accuracy": 0.843298969072165,
     "macro avg": {
-      "precision": 0.8970673076923077,
-      "recall": 0.9293155071318668,
-      "f1-score": 0.9105563004351315,
+      "precision": 0.8095755075453261,
+      "recall": 0.8557408408533289,
+      "f1-score": 0.8233456023311096,
       "support": 485.0
     },
     "weighted avg": {
-      "precision": 0.9304934575733544,
-      "recall": 0.9237113402061856,
-      "f1-score": 0.9251965866319496,
+      "precision": 0.8682373271760457,
+      "recall": 0.843298969072165,
+      "f1-score": 0.848685153959321,
       "support": 485.0
     }
-  }
+  },
+  "cv_strategy": "StratifiedKFold over real samples only; each train fold augmented with all mock samples, test fold is real-only."
 }

@@ -1,0 +1,401 @@
+sleep_duration,energy_level,academic_pressure,study_motivation,concentration_difficulty,morning_mood,emotional_low,anxiety_level,social_support,financial_stress,at_risk
+More than 8 hours,5,Often,2,Rarely,Sad,Always,Always,Slightly,5,1
+7-8 hours,5,Often,2,Often,Neutral,Sometimes,Rarely,Moderately,2,0
+7-8 hours,3,Often,3,Always,Neutral,Sometimes,Often,Moderately,1,1
+5-6 hours,3,Rarely,1,Sometimes,Positive,Often,Rarely,Moderately,3,0
+Less than 5 hours,4,Rarely,4,Often,Neutral,Often,Rarely,Very,2,0
+Less than 5 hours,3,Sometimes,2,Rarely,Positive,Sometimes,Often,Extremely,5,1
+5-6 hours,4,Sometimes,1,Sometimes,Positive,Often,Rarely,Very,5,0
+7-8 hours,5,Sometimes,2,Sometimes,Neutral,Rarely,Sometimes,Very,5,0
+7-8 hours,2,Always,1,Rarely,Neutral,Often,Often,Moderately,4,1
+7-8 hours,3,Sometimes,3,Rarely,Positive,Often,Rarely,Very,3,0
+Less than 5 hours,3,Sometimes,2,Sometimes,Neutral,Sometimes,Always,Slightly,3,1
+7-8 hours,2,Sometimes,1,Rarely,Neutral,Often,Rarely,Slightly,3,1
+5-6 hours,3,Always,2,Rarely,Neutral,Often,Often,Moderately,3,1
+7-8 hours,3,Rarely,3,Rarely,Neutral,Often,Never,Not at all,1,0
+5-6 hours,3,Rarely,5,Never,Sad,Often,Often,Slightly,5,1
+5-6 hours,4,Sometimes,2,Often,Neutral,Sometimes,Always,Moderately,4,1
+5-6 hours,3,Often,3,Sometimes,Neutral,Always,Rarely,Moderately,5,1
+5-6 hours,4,Sometimes,3,Sometimes,Neutral,Never,Sometimes,Very,2,0
+More than 8 hours,3,Sometimes,4,Sometimes,Positive,Often,Often,Slightly,2,0
+Less than 5 hours,2,Sometimes,2,Rarely,Neutral,Always,Always,Not at all,3,1
+More than 8 hours,4,Always,2,Often,Sad,Often,Sometimes,Slightly,4,1
+7-8 hours,3,Often,1,Sometimes,Neutral,Sometimes,Often,Not at all,2,1
+Less than 5 hours,4,Sometimes,2,Often,Neutral,Sometimes,Sometimes,Moderately,2,1
+Less than 5 hours,3,Often,3,Often,Neutral,Often,Sometimes,Very,2,1
+7-8 hours,3,Often,5,Often,Energized,Always,Always,Not at all,5,1
+Less than 5 hours,3,Often,3,Sometimes,Positive,Sometimes,Rarely,Extremely,2,0
+7-8 hours,4,Sometimes,2,Rarely,Positive,Sometimes,Often,Extremely,1,0
+7-8 hours,3,Sometimes,2,Often,Neutral,Often,Often,Very,5,1
+5-6 hours,4,Always,3,Always,sad,Sometimes,Often,Very,3,1
+7-8 hours,5,Sometimes,2,Rarely,sad,Never,Rarely,Very,5,0
+7-8 hours,3,Often,3,Sometimes,Neutral,Always,Often,Moderately,5,1
+5-6 hours,3,Often,1,Rarely,Positive,Often,Never,Very,3,0
+7-8 hours,2,Always,2,Always,Neutral,Rarely,Often,Slightly,4,1
+Less than 5 hours,1,Often,1,Often,Sad,Often,Always,Slightly,5,1
+5-6 hours,2,Often,1,Always,Neutral,Often,Often,Moderately,5,1
+Less than 5 hours,5,Sometimes,4,Sometimes,Positive,Sometimes,Often,Extremely,2,0
+5-6 hours,3,Rarely,5,Often,Neutral,Often,Always,Not at all,3,1
+7-8 hours,3,Sometimes,2,Sometimes,Positive,Sometimes,Rarely,Moderately,1,0
+5-6 hours,3,Often,3,Sometimes,very happy,Often,Always,Very,1,1
+7-8 hours,3,Always,2,Sometimes,Neutral,Often,Rarely,Very,5,1
+7-8 hours,3,Always,2,Always,Sad,Sometimes,Often,Moderately,5,1
+5-6 hours,3,Rarely,4,Sometimes,Neutral,Often,Never,Not at all,2,1
+Less than 5 hours,4,Often,2,Often,Energized,Often,Rarely,Not at all,3,1
+7-8 hours,4,Often,3,Rarely,Positive,Sometimes,Often,Moderately,5,0
+7-8 hours,5,Sometimes,3,Often,Neutral,Rarely,Often,Very,2,0
+5-6 hours,3,Never,2,Rarely,Positive,Often,Often,Very,3,0
+7-8 hours,2,Sometimes,3,Often,Positive,Never,Rarely,Not at all,4,0
+7-8 hours,4,Always,3,Sometimes,Neutral,Always,Always,Very,5,1
+5-6 hours,3,Often,2,Rarely,very sad,Often,Rarely,Moderately,5,1
+5-6 hours,5,Sometimes,2,Rarely,Neutral,Sometimes,Always,Moderately,3,1
+5-6 hours,3,Sometimes,4,Often,Positive,Rarely,Sometimes,Moderately,2,0
+7-8 hours,3,Never,4,Often,Positive,Rarely,Sometimes,Moderately,4,0
+5-6 hours,2,Never,2,Rarely,Neutral,Rarely,Rarely,Moderately,4,0
+5-6 hours,3,Always,2,Always,Neutral,Often,Often,Moderately,3,1
+7-8 hours,2,Rarely,3,Never,Neutral,Rarely,Sometimes,Very,4,0
+7-8 hours,3,Always,2,Always,Neutral,Often,Rarely,Very,3,1
+More than 8 hours,3,Rarely,3,Sometimes,Neutral,Rarely,Sometimes,Very,5,0
+5-6 hours,3,Sometimes,3,Always,Neutral,Often,Often,Very,5,1
+7-8 hours,3,Often,5,Rarely,Neutral,Sometimes,Always,Extremely,3,1
+7-8 hours,5,Often,2,Sometimes,Neutral,Never,Never,Moderately,2,0
+7-8 hours,3,Never,3,Rarely,Neutral,Often,Sometimes,Moderately,2,0
+5-6 hours,3,Sometimes,1,Often,Neutral,Often,Often,Not at all,4,1
+5-6 hours,2,Sometimes,2,Rarely,Neutral,Sometimes,Often,Moderately,3,1
+7-8 hours,3,Always,5,Often,Neutral,Sometimes,Always,Extremely,3,1
+5-6 hours,3,Often,1,Rarely,Energized,Always,Often,Very,2,1
+5-6 hours,3,Often,2,Sometimes,Neutral,Always,Rarely,Moderately,3,1
+7-8 hours,4,Often,1,Often,Neutral,Sometimes,Rarely,Very,5,0
+5-6 hours,4,Rarely,3,Always,Neutral,Sometimes,Often,Very,4,1
+7-8 hours,3,Never,3,Often,Positive,Sometimes,Sometimes,Slightly,5,0
+5-6 hours,4,Sometimes,3,Sometimes,Neutral,Often,Often,Extremely,3,0
+7-8 hours,3,Sometimes,2,Sometimes,Energized,Rarely,Often,Very,4,0
+7-8 hours,3,Sometimes,2,Often,Neutral,Rarely,Rarely,Very,3,0
+7-8 hours,2,Often,3,Sometimes,very sad,Always,Always,Moderately,5,1
+5-6 hours,2,Often,3,Often,very sad,Often,Often,Moderately,5,1
+More than 8 hours,5,Often,5,Sometimes,Neutral,Sometimes,Sometimes,Moderately,3,0
+Less than 5 hours,3,Often,1,Sometimes,Neutral,Sometimes,Always,Moderately,3,1
+7-8 hours,2,Often,2,Sometimes,Neutral,Always,Rarely,Moderately,4,1
+Less than 5 hours,3,Often,2,Always,Positive,Often,Always,Slightly,5,1
+More than 8 hours,3,Often,2,Rarely,sad,Often,Sometimes,Not at all,3,1
+7-8 hours,3,Sometimes,4,Rarely,Neutral,Sometimes,Never,Slightly,1,0
+7-8 hours,2,Always,4,Often,Positive,Always,Often,Moderately,5,1
+5-6 hours,3,Sometimes,2,Often,Neutral,Sometimes,Often,Moderately,5,1
+7-8 hours,3,Sometimes,3,Sometimes,Neutral,Always,Always,Slightly,4,1
+5-6 hours,3,Sometimes,3,Often,Sad,Often,Rarely,Very,3,0
+5-6 hours,5,Often,1,Rarely,Neutral,Sometimes,Often,Moderately,5,1
+5-6 hours,4,Sometimes,4,Sometimes,Neutral,Often,Always,Extremely,2,0
+7-8 hours,3,Sometimes,3,Often,Neutral,Sometimes,Rarely,Moderately,2,1
+7-8 hours,4,Always,3,Sometimes,Neutral,Sometimes,Never,Not at all,3,1
+7-8 hours,3,Sometimes,2,Rarely,Neutral,Sometimes,Sometimes,Very,3,0
+5-6 hours,5,Often,1,Rarely,Neutral,Sometimes,Often,Slightly,3,0
+7-8 hours,4,Sometimes,2,Rarely,Neutral,Often,Sometimes,Extremely,3,1
+Less than 5 hours,4,Rarely,5,Rarely,Positive,Often,Often,Extremely,1,0
+7-8 hours,3,Sometimes,3,Rarely,Neutral,Often,Often,Very,2,0
+5-6 hours,3,Rarely,1,Sometimes,Neutral,Often,Rarely,Very,2,0
+5-6 hours,2,Sometimes,5,Always,Neutral,Often,Often,Not at all,2,1
+Less than 5 hours,3,Often,1,Often,Sad,Sometimes,Often,Moderately,5,1
+7-8 hours,3,Often,3,Rarely,Neutral,Always,Rarely,Extremely,4,1
+7-8 hours,2,Sometimes,1,Always,Neutral,Often,Rarely,Very,5,1
+More than 8 hours,4,Sometimes,3,Always,Sad,Often,Sometimes,Very,1,0
+7-8 hours,3,Often,3,Rarely,Neutral,Often,Sometimes,Very,1,0
+5-6 hours,2,Often,4,Rarely,Neutral,Rarely,Sometimes,Very,3,0
+7-8 hours,3,Often,1,Always,Neutral,Always,Often,Not at all,1,1
+7-8 hours,4,Rarely,4,Sometimes,Neutral,Sometimes,Often,Moderately,3,0
+5-6 hours,5,Sometimes,3,Always,Neutral,Sometimes,Often,Very,5,1
+5-6 hours,2,Often,3,Sometimes,Neutral,Sometimes,Rarely,Slightly,3,1
+7-8 hours,3,Often,2,Rarely,Neutral,Sometimes,Rarely,Moderately,3,0
+5-6 hours,2,Always,3,Often,Neutral,Sometimes,Always,Very,4,1
+7-8 hours,4,Never,3,Often,Neutral,Rarely,Rarely,Moderately,2,0
+5-6 hours,3,Often,2,Often,Sad,Often,Always,Slightly,5,1
+7-8 hours,3,Sometimes,3,Often,Energized,Often,Often,Very,3,1
+7-8 hours,3,Often,2,Always,Neutral,Sometimes,Sometimes,Not at all,4,1
+7-8 hours,3,Always,2,Often,Positive,Often,Often,Moderately,5,1
+7-8 hours,4,Often,2,Sometimes,Positive,Sometimes,Rarely,Slightly,3,0
+7-8 hours,2,Always,3,Sometimes,very happy,Often,Always,Extremely,4,1
+5-6 hours,2,Sometimes,3,Rarely,Neutral,Often,Rarely,Very,1,0
+7-8 hours,3,Sometimes,1,Sometimes,Neutral,Often,Often,Very,2,1
+More than 8 hours,4,Always,1,Always,very sad,Often,Often,Moderately,4,1
+7-8 hours,3,Always,4,Sometimes,Positive,Rarely,Rarely,Extremely,2,0
+7-8 hours,3,Often,5,Rarely,Neutral,Sometimes,Often,Very,5,1
+5-6 hours,2,Always,3,Never,Neutral,Often,Often,Not at all,3,1
+5-6 hours,5,Often,2,Often,Neutral,Rarely,Often,Moderately,2,1
+7-8 hours,3,Rarely,1,Sometimes,Sad,Often,Sometimes,Slightly,3,1
+5-6 hours,3,Often,1,Sometimes,Positive,Always,Always,Moderately,4,1
+7-8 hours,3,Often,3,Often,very happy,Rarely,Often,Very,2,0
+7-8 hours,2,Often,2,Often,Neutral,Often,Rarely,Moderately,4,1
+7-8 hours,3,Often,3,Often,sad,Sometimes,Often,Very,2,1
+5-6 hours,3,Sometimes,2,Always,Neutral,Often,Always,Very,5,1
+7-8 hours,5,Sometimes,2,Often,Positive,Often,Rarely,Slightly,5,1
+5-6 hours,3,Sometimes,3,Rarely,very sad,Sometimes,Always,Very,5,1
+5-6 hours,3,Often,3,Sometimes,Neutral,Sometimes,Sometimes,Very,1,0
+7-8 hours,2,Sometimes,3,Sometimes,Neutral,Sometimes,Rarely,Moderately,5,1
+7-8 hours,3,Sometimes,5,Sometimes,Neutral,Sometimes,Always,Moderately,2,0
+7-8 hours,2,Rarely,3,Sometimes,Neutral,Often,Always,Moderately,3,1
+7-8 hours,3,Often,1,Often,Neutral,Often,Always,Very,5,1
+5-6 hours,4,Often,3,Sometimes,very sad,Often,Often,Slightly,4,1
+5-6 hours,5,Sometimes,2,Often,Neutral,Often,Often,Slightly,3,1
+5-6 hours,4,Always,3,Never,Sad,Sometimes,Rarely,Very,5,1
+5-6 hours,3,Always,3,Never,very happy,Always,Rarely,Not at all,5,1
+More than 8 hours,5,Sometimes,3,Often,Positive,Sometimes,Rarely,Extremely,2,0
+7-8 hours,3,Often,3,Always,Positive,Never,Sometimes,Not at all,3,1
+7-8 hours,4,Sometimes,3,Sometimes,Positive,Sometimes,Always,Slightly,4,0
+7-8 hours,3,Often,3,Sometimes,Positive,Sometimes,Rarely,Very,5,0
+5-6 hours,4,Always,3,Rarely,Sad,Often,Always,Moderately,4,1
+5-6 hours,5,Always,3,Often,Neutral,Sometimes,Often,Moderately,5,1
+5-6 hours,3,Sometimes,2,Often,Sad,Often,Sometimes,Moderately,2,1
+5-6 hours,2,Sometimes,4,Sometimes,Positive,Sometimes,Always,Slightly,5,1
+7-8 hours,4,Always,4,Sometimes,Positive,Sometimes,Rarely,Moderately,3,0
+5-6 hours,3,Sometimes,2,Often,Neutral,Rarely,Always,Moderately,5,1
+5-6 hours,3,Sometimes,4,Rarely,Neutral,Often,Rarely,Very,1,1
+5-6 hours,2,Sometimes,2,Often,Neutral,Often,Often,Moderately,3,1
+7-8 hours,2,Often,2,Always,Neutral,Always,Always,Not at all,2,1
+7-8 hours,3,Never,4,Sometimes,Neutral,Sometimes,Often,Very,4,0
+5-6 hours,3,Always,2,Often,Energized,Often,Always,Moderately,2,1
+5-6 hours,3,Always,1,Often,Neutral,Often,Sometimes,Not at all,4,1
+5-6 hours,4,Often,1,Sometimes,Neutral,Sometimes,Often,Very,5,0
+7-8 hours,2,Sometimes,4,Sometimes,Positive,Often,Rarely,Very,4,0
+7-8 hours,2,Always,3,Often,Neutral,Often,Always,Slightly,3,1
+5-6 hours,3,Often,2,Sometimes,Neutral,Often,Sometimes,Very,2,1
+More than 8 hours,3,Sometimes,1,Often,Neutral,Rarely,Rarely,Very,5,0
+5-6 hours,2,Never,4,Rarely,Positive,Often,Often,Extremely,5,0
+Less than 5 hours,3,Sometimes,4,Often,Neutral,Often,Sometimes,Moderately,2,0
+7-8 hours,4,Often,3,Sometimes,Sad,Often,Sometimes,Very,1,0
+7-8 hours,3,Always,2,Always,Sad,Always,Always,Moderately,1,1
+Less than 5 hours,2,Often,3,Sometimes,Sad,Always,Always,Very,3,1
+7-8 hours,2,Often,2,Sometimes,Neutral,Always,Rarely,Not at all,4,1
+7-8 hours,2,Sometimes,3,Rarely,Neutral,Sometimes,Always,Moderately,4,1
+5-6 hours,3,Sometimes,3,Sometimes,sad,Often,Always,Moderately,3,1
+7-8 hours,4,Sometimes,3,Sometimes,Sad,Always,Often,Very,2,1
+5-6 hours,4,Sometimes,3,Often,Sad,Sometimes,Sometimes,Moderately,1,0
+5-6 hours,3,Often,2,Often,Neutral,Often,Always,Moderately,5,1
+7-8 hours,4,Always,3,Often,Neutral,Sometimes,Rarely,Very,2,1
+7-8 hours,3,Always,2,Always,Neutral,Sometimes,Often,Slightly,5,1
+7-8 hours,2,Sometimes,3,Sometimes,Neutral,Always,Rarely,Slightly,3,1
+7-8 hours,3,Sometimes,2,Always,Neutral,Often,Always,Moderately,3,1
+5-6 hours,3,Always,3,Always,Positive,Always,Always,Slightly,2,1
+7-8 hours,5,Always,3,Often,Very sad,Always,Often,Moderately,3,1
+5-6 hours,3,Often,5,Rarely,Neutral,Often,Always,Slightly,5,1
+7-8 hours,4,Sometimes,4,Sometimes,Neutral,Sometimes,Sometimes,Moderately,2,0
+7-8 hours,1,Sometimes,3,Always,Sad,Often,Always,Extremely,4,1
+More than 8 hours,3,Sometimes,3,Often,Neutral,Often,Always,Very,5,1
+5-6 hours,4,Often,2,Never,Neutral,Sometimes,Often,Slightly,2,0
+7-8 hours,5,Often,2,Often,Energized,Sometimes,Often,Moderately,5,1
+5-6 hours,3,Often,5,Often,Very sad,Often,Always,Slightly,1,1
+Less than 5 hours,2,Sometimes,1,Always,Neutral,Often,Always,Moderately,5,1
+More than 8 hours,3,Sometimes,2,Often,Neutral,Always,Often,Slightly,5,1
+7-8 hours,3,Often,2,Rarely,Energized,Often,Sometimes,Moderately,5,1
+5-6 hours,4,Always,4,Sometimes,Neutral,Sometimes,Rarely,Very,4,0
+7-8 hours,3,Always,2,Rarely,Neutral,Often,Often,Slightly,3,1
+More than 8 hours,2,Often,2,Sometimes,Energized,Rarely,Always,Very,3,0
+5-6 hours,4,Often,1,Sometimes,Neutral,Sometimes,Never,Slightly,4,0
+7-8 hours,3,Sometimes,2,Rarely,Positive,Rarely,Sometimes,Very,2,0
+Less than 5 hours,3,Sometimes,2,Always,Neutral,Sometimes,Rarely,Moderately,4,0
+5-6 hours,3,Often,2,Often,Sad,Often,Rarely,Not at all,2,1
+5-6 hours,3,Often,4,Sometimes,Positive,Sometimes,Never,Slightly,5,0
+More than 8 hours,2,Rarely,2,Rarely,Neutral,Sometimes,Always,Moderately,5,1
+5-6 hours,4,Rarely,3,Rarely,Neutral,Rarely,Often,Very,3,0
+7-8 hours,5,Rarely,4,Always,Neutral,Rarely,Rarely,Not at all,1,0
+7-8 hours,2,Often,2,Sometimes,Positive,Sometimes,Rarely,Very,5,1
+5-6 hours,3,Sometimes,2,Often,Neutral,Rarely,Often,Very,2,0
+7-8 hours,3,Often,2,Rarely,Neutral,Sometimes,Always,Moderately,4,1
+Less than 5 hours,3,Sometimes,2,Rarely,Neutral,Never,Sometimes,Moderately,3,1
+More than 8 hours,3,Sometimes,4,Rarely,Positive,Sometimes,Never,Moderately,5,0
+5-6 hours,3,Sometimes,2,Often,Neutral,Often,Always,Very,2,1
+5-6 hours,2,Often,2,Never,Sad,Often,Always,Moderately,4,1
+Less than 5 hours,4,Rarely,3,Sometimes,Neutral,Often,Often,Very,2,0
+7-8 hours,3,Sometimes,1,Rarely,Neutral,Sometimes,Always,Very,3,1
+More than 8 hours,3,Always,2,Always,Very sad,Sometimes,Rarely,Slightly,4,1
+Less than 5 hours,3,Sometimes,2,Often,Neutral,Sometimes,Always,Very,4,1
+7-8 hours,2,Often,5,Sometimes,Neutral,Always,Rarely,Very,5,1
+5-6 hours,3,Often,1,Sometimes,Positive,Sometimes,Sometimes,Moderately,5,1
+5-6 hours,3,Rarely,4,Often,very happy,Always,Always,Slightly,5,1
+7-8 hours,3,Never,3,Sometimes,Positive,Sometimes,Always,Moderately,3,0
+More than 8 hours,3,Always,3,Never,sad,Always,Often,Extremely,3,1
+5-6 hours,3,Sometimes,2,Sometimes,Neutral,Often,Often,Not at all,3,1
+Less than 5 hours,4,Often,1,Sometimes,Neutral,Often,Often,Moderately,3,1
+5-6 hours,3,Always,1,Rarely,Positive,Sometimes,Rarely,Very,1,0
+7-8 hours,2,Always,2,Sometimes,sad,Often,Sometimes,Very,3,1
+7-8 hours,3,Rarely,4,Often,Neutral,Sometimes,Always,Very,3,0
+5-6 hours,2,Often,5,Rarely,Neutral,Always,Often,Moderately,5,1
+7-8 hours,3,Sometimes,2,Sometimes,Positive,Sometimes,Rarely,Very,5,0
+5-6 hours,3,Often,2,Always,Energized,Sometimes,Always,Very,4,1
+5-6 hours,3,Rarely,3,Often,Sad,Often,Sometimes,Slightly,5,1
+7-8 hours,4,Never,3,Sometimes,Neutral,Always,Often,Very,4,0
+5-6 hours,3,Often,5,Always,Sad,Often,Always,Moderately,2,1
+5-6 hours,3,Always,3,Often,Neutral,Sometimes,Rarely,Moderately,3,1
+7-8 hours,4,Often,1,Sometimes,Sad,Often,Always,Slightly,4,1
+7-8 hours,4,Often,3,Always,Very sad,Often,Sometimes,Moderately,5,1
+7-8 hours,3,Sometimes,2,Sometimes,Positive,Sometimes,Often,Very,2,0
+7-8 hours,3,Sometimes,3,Sometimes,Neutral,Sometimes,Sometimes,Moderately,2,0
+5-6 hours,3,Often,1,Sometimes,Energized,Sometimes,Rarely,Not at all,1,1
+7-8 hours,5,Rarely,3,Often,Neutral,Sometimes,Sometimes,Very,3,0
+5-6 hours,4,Sometimes,3,Sometimes,Positive,Sometimes,Sometimes,Moderately,4,0
+7-8 hours,4,Rarely,3,Sometimes,Positive,Sometimes,Never,Very,1,0
+7-8 hours,3,Sometimes,2,Rarely,Neutral,Sometimes,Always,Very,2,0
+7-8 hours,4,Sometimes,2,Rarely,Very sad,Often,Sometimes,Very,3,0
+5-6 hours,2,Always,2,Often,Positive,Often,Often,Extremely,4,1
+Less than 5 hours,3,Sometimes,2,Often,Neutral,Often,Often,Very,4,1
+7-8 hours,4,Sometimes,2,Sometimes,very sad,Always,Often,Very,2,1
+5-6 hours,2,Always,3,Often,Neutral,Sometimes,Often,Moderately,2,1
+5-6 hours,3,Rarely,4,Often,Neutral,Rarely,Rarely,Very,3,0
+7-8 hours,3,Sometimes,4,Sometimes,Positive,Often,Rarely,Moderately,2,0
+5-6 hours,2,Often,2,Sometimes,Neutral,Often,Often,Slightly,2,1
+5-6 hours,4,Often,2,Often,Neutral,Always,Rarely,Very,4,1
+7-8 hours,2,Sometimes,5,Rarely,Neutral,Rarely,Sometimes,Very,5,0
+7-8 hours,3,Sometimes,2,Sometimes,Sad,Sometimes,Rarely,Very,4,1
+7-8 hours,2,Always,2,Rarely,Sad,Sometimes,Often,Not at all,3,1
+5-6 hours,2,Sometimes,2,Often,Neutral,Often,Sometimes,Moderately,4,1
+7-8 hours,2,Rarely,4,Never,Neutral,Sometimes,Rarely,Very,2,0
+More than 8 hours,3,Often,2,Rarely,Neutral,Sometimes,Rarely,Very,5,0
+5-6 hours,3,Often,2,Sometimes,Neutral,Often,Always,Moderately,5,1
+More than 8 hours,3,Always,3,Sometimes,Neutral,Often,Always,Very,2,1
+5-6 hours,3,Sometimes,2,Always,Positive,Often,Often,Not at all,4,1
+5-6 hours,3,Often,3,Sometimes,Positive,Always,Always,Very,5,1
+5-6 hours,3,Sometimes,3,Sometimes,Sad,Sometimes,Often,Very,5,1
+More than 8 hours,2,Often,3,Often,Energized,Sometimes,Rarely,Moderately,4,1
+7-8 hours,4,Always,1,Sometimes,Positive,Sometimes,Rarely,Moderately,5,0
+Less than 5 hours,2,Often,2,Rarely,Neutral,Sometimes,Often,Moderately,5,1
+5-6 hours,5,Rarely,3,Often,Neutral,Always,Often,Very,5,1
+7-8 hours,4,Rarely,4,Often,Positive,Sometimes,Often,Very,4,0
+Less than 5 hours,3,Often,1,Rarely,very happy,Often,Always,Moderately,4,1
+Less than 5 hours,2,Often,2,Always,Neutral,Sometimes,Rarely,Moderately,4,1
+5-6 hours,3,Often,1,Often,Sad,Often,Often,Very,5,1
+7-8 hours,4,Often,1,Often,Neutral,Sometimes,Sometimes,Slightly,5,1
+5-6 hours,3,Always,2,Never,Neutral,Always,Often,Very,5,1
+Less than 5 hours,3,Always,3,Sometimes,Sad,Sometimes,Often,Very,3,1
+5-6 hours,2,Often,4,Often,Neutral,Sometimes,Sometimes,Very,3,1
+More than 8 hours,2,Often,2,Often,Neutral,Always,Sometimes,Not at all,3,1
+5-6 hours,3,Often,3,Sometimes,Positive,Often,Rarely,Very,3,0
+7-8 hours,5,Always,3,Often,Neutral,Often,Often,Not at all,5,1
+5-6 hours,2,Often,2,Often,Neutral,Always,Sometimes,Slightly,4,1
+Less than 5 hours,2,Often,3,Never,Positive,Rarely,Never,Very,2,0
+Less than 5 hours,3,Sometimes,2,Never,Positive,Always,Always,Moderately,3,0
+5-6 hours,4,Often,3,Sometimes,Positive,Rarely,Rarely,Moderately,3,0
+7-8 hours,3,Sometimes,2,Rarely,Neutral,Sometimes,Often,Moderately,3,1
+Less than 5 hours,2,Often,3,Always,Neutral,Often,Always,Slightly,2,1
+5-6 hours,4,Often,4,Sometimes,Neutral,Rarely,Often,Very,3,0
+7-8 hours,2,Sometimes,2,Often,Sad,Often,Sometimes,Very,5,1
+7-8 hours,3,Often,2,Often,Neutral,Sometimes,Always,Very,5,1
+More than 8 hours,3,Often,2,Often,Neutral,Sometimes,Often,Moderately,4,0
+7-8 hours,3,Often,4,Often,Neutral,Sometimes,Often,Very,2,1
+Less than 5 hours,4,Often,3,Rarely,Sad,Often,Always,Very,5,1
+Less than 5 hours,4,Sometimes,2,Rarely,Neutral,Always,Sometimes,Slightly,5,1
+7-8 hours,4,Often,1,Sometimes,Neutral,Sometimes,Rarely,Slightly,5,1
+5-6 hours,4,Often,3,Always,Neutral,Often,Often,Very,4,1
+5-6 hours,3,Often,4,Rarely,Sad,Sometimes,Rarely,Extremely,2,0
+5-6 hours,3,Sometimes,3,Sometimes,Sad,Always,Always,Moderately,3,1
+5-6 hours,4,Often,4,Rarely,Positive,Rarely,Rarely,Very,4,0
+5-6 hours,2,Often,5,Sometimes,very sad,Sometimes,Often,Moderately,5,1
+7-8 hours,3,Sometimes,2,Sometimes,Neutral,Sometimes,Rarely,Slightly,1,0
+5-6 hours,4,Sometimes,2,Sometimes,Neutral,Sometimes,Sometimes,Very,3,0
+5-6 hours,3,Always,1,Sometimes,sad,Sometimes,Always,Very,4,1
+5-6 hours,3,Often,5,Often,sad,Often,Always,Extremely,3,1
+7-8 hours,4,Never,2,Often,Neutral,Sometimes,Often,Not at all,2,1
+7-8 hours,2,Sometimes,2,Sometimes,Neutral,Always,Often,Not at all,3,1
+5-6 hours,4,Sometimes,3,Often,Positive,Often,Sometimes,Moderately,3,0
+7-8 hours,4,Sometimes,4,Often,Neutral,Sometimes,Rarely,Very,4,0
+Less than 5 hours,3,Often,2,Rarely,Neutral,Sometimes,Always,Moderately,3,1
+5-6 hours,3,Sometimes,2,Sometimes,very sad,Often,Sometimes,Slightly,5,1
+7-8 hours,3,Often,2,Often,Positive,Rarely,Often,Moderately,5,1
+5-6 hours,3,Always,4,Often,Neutral,Sometimes,Always,Very,3,0
+5-6 hours,4,Sometimes,5,Sometimes,Neutral,Often,Sometimes,Very,3,0
+7-8 hours,4,Often,3,Sometimes,Neutral,Often,Always,Slightly,4,1
+7-8 hours,4,Often,5,Often,very sad,Always,Often,Extremely,5,1
+7-8 hours,5,Often,2,Sometimes,Very sad,Often,Sometimes,Very,3,0
+7-8 hours,4,Always,1,Often,Sad,Often,Often,Moderately,4,1
+Less than 5 hours,3,Sometimes,1,Often,very sad,Always,Often,Moderately,3,1
+5-6 hours,3,Sometimes,2,Always,Positive,Sometimes,Rarely,Moderately,3,0
+5-6 hours,5,Always,4,Often,Neutral,Sometimes,Always,Moderately,5,1
+5-6 hours,3,Often,2,Often,Sad,Sometimes,Always,Moderately,3,1
+7-8 hours,2,Often,2,Often,Neutral,Often,Rarely,Moderately,2,1
+7-8 hours,3,Sometimes,3,Sometimes,Neutral,Rarely,Always,Slightly,3,0
+7-8 hours,2,Always,2,Sometimes,very sad,Often,Rarely,Moderately,5,1
+Less than 5 hours,2,Always,2,Often,Neutral,Often,Always,Slightly,1,1
+5-6 hours,4,Always,4,Often,sad,Rarely,Rarely,Moderately,2,0
+More than 8 hours,2,Sometimes,1,Rarely,very happy,Often,Rarely,Very,2,1
+5-6 hours,5,Often,3,Often,Neutral,Often,Often,Very,5,1
+5-6 hours,3,Sometimes,4,Often,Sad,Sometimes,Rarely,Slightly,3,1
+7-8 hours,3,Sometimes,1,Sometimes,Neutral,Often,Always,Very,1,1
+Less than 5 hours,3,Often,2,Always,very sad,Often,Often,Not at all,3,1
+Less than 5 hours,4,Sometimes,2,Sometimes,Neutral,Often,Sometimes,Very,5,1
+7-8 hours,3,Sometimes,2,Sometimes,Neutral,Sometimes,Rarely,Moderately,2,0
+7-8 hours,2,Sometimes,5,Rarely,Positive,Sometimes,Sometimes,Not at all,2,0
+7-8 hours,3,Sometimes,3,Often,Neutral,Sometimes,Rarely,Extremely,3,0
+Less than 5 hours,3,Always,4,Sometimes,very sad,Always,Often,Moderately,5,1
+Less than 5 hours,3,Always,2,Sometimes,Neutral,Sometimes,Often,Moderately,5,1
+5-6 hours,2,Often,3,Rarely,Neutral,Often,Sometimes,Slightly,3,1
+5-6 hours,1,Often,3,Sometimes,sad,Often,Always,Slightly,4,1
+5-6 hours,1,Often,2,Sometimes,very sad,Sometimes,Often,Very,2,1
+7-8 hours,5,Never,4,Always,Neutral,Often,Sometimes,Extremely,2,0
+5-6 hours,3,Often,2,Often,Sad,Sometimes,Sometimes,Very,3,1
+7-8 hours,4,Often,2,Sometimes,Neutral,Often,Always,Very,4,1
+7-8 hours,5,Sometimes,4,Rarely,Neutral,Rarely,Rarely,Very,5,0
+7-8 hours,3,Always,2,Sometimes,Neutral,Sometimes,Often,Not at all,5,1
+More than 8 hours,5,Sometimes,4,Sometimes,Neutral,Sometimes,Often,Very,1,0
+5-6 hours,4,Often,2,Always,Neutral,Often,Sometimes,Not at all,5,1
+7-8 hours,4,Sometimes,3,Sometimes,Positive,Rarely,Often,Moderately,2,0
+More than 8 hours,3,Always,2,Always,Sad,Sometimes,Often,Slightly,5,1
+5-6 hours,1,Rarely,2,Often,Positive,Sometimes,Always,Slightly,5,1
+5-6 hours,3,Always,3,Sometimes,Neutral,Sometimes,Rarely,Very,4,0
+7-8 hours,3,Sometimes,3,Sometimes,Neutral,Sometimes,Often,Moderately,5,0
+7-8 hours,3,Always,1,Sometimes,Neutral,Often,Sometimes,Very,4,1
+5-6 hours,3,Often,2,Often,Neutral,Sometimes,Rarely,Very,3,0
+7-8 hours,3,Rarely,3,Rarely,Sad,Rarely,Rarely,Very,5,0
+5-6 hours,4,Sometimes,4,Sometimes,Positive,Rarely,Sometimes,Very,1,0
+Less than 5 hours,3,Always,2,Always,Sad,Often,Sometimes,Extremely,5,1
+5-6 hours,5,Always,2,Always,Sad,Often,Rarely,Moderately,4,1
+7-8 hours,2,Always,2,Always,very happy,Often,Rarely,Moderately,4,1
+5-6 hours,4,Often,3,Sometimes,Neutral,Always,Often,Very,4,0
+7-8 hours,2,Never,2,Sometimes,very happy,Always,Often,Moderately,2,1
+5-6 hours,4,Often,2,Never,Neutral,Always,Always,Extremely,5,1
+5-6 hours,3,Sometimes,3,Sometimes,Neutral,Sometimes,Rarely,Very,2,0
+7-8 hours,3,Often,4,Sometimes,Neutral,Rarely,Rarely,Very,3,0
+7-8 hours,4,Sometimes,3,Sometimes,Neutral,Rarely,Often,Very,3,0
+7-8 hours,3,Often,2,Often,Positive,Always,Often,Moderately,5,1
+5-6 hours,3,Never,1,Never,Neutral,Sometimes,Always,Extremely,5,0
+5-6 hours,5,Always,4,Often,sad,Often,Always,Moderately,4,1
+Less than 5 hours,3,Sometimes,3,Rarely,very sad,Sometimes,Rarely,Very,3,0
+7-8 hours,3,Never,1,Sometimes,Positive,Sometimes,Often,Very,3,0
+5-6 hours,5,Often,4,Never,Neutral,Never,Rarely,Extremely,2,0
+7-8 hours,5,Always,3,Rarely,Positive,Rarely,Sometimes,Moderately,5,0
+7-8 hours,5,Always,4,Sometimes,Positive,Rarely,Sometimes,Very,4,0
+5-6 hours,3,Often,2,Often,Neutral,Often,Often,Moderately,3,1
+7-8 hours,3,Always,2,Always,sad,Often,Always,Moderately,3,1
+7-8 hours,4,Rarely,4,Sometimes,Neutral,Rarely,Rarely,Very,3,0
+Less than 5 hours,3,Often,1,Sometimes,very happy,Often,Rarely,Very,2,1
+Less than 5 hours,2,Sometimes,2,Sometimes,sad,Often,Always,Extremely,5,1
+7-8 hours,3,Always,3,Rarely,Sad,Often,Always,Moderately,4,1
+Less than 5 hours,3,Often,2,Often,Sad,Sometimes,Always,Moderately,3,1
+More than 8 hours,5,Often,1,Sometimes,Sad,Often,Often,Very,5,1
+Less than 5 hours,3,Sometimes,4,Sometimes,Neutral,Rarely,Sometimes,Very,1,0
+7-8 hours,3,Sometimes,2,Often,Neutral,Sometimes,Rarely,Moderately,5,1
+5-6 hours,3,Sometimes,2,Sometimes,Positive,Sometimes,Sometimes,Moderately,5,0
+5-6 hours,3,Often,3,Always,Neutral,Sometimes,Always,Very,4,1
+5-6 hours,3,Sometimes,3,Sometimes,Neutral,Rarely,Rarely,Very,4,0
+7-8 hours,3,Sometimes,3,Sometimes,Positive,Often,Often,Extremely,3,0
+7-8 hours,3,Rarely,3,Often,Neutral,Always,Often,Very,5,1
+7-8 hours,3,Often,3,Sometimes,Positive,Sometimes,Never,Moderately,4,0
+7-8 hours,2,Always,2,Often,Sad,Always,Sometimes,Moderately,5,1
+Less than 5 hours,2,Often,4,Often,Positive,Always,Rarely,Very,5,1
+More than 8 hours,3,Rarely,2,Always,Neutral,Sometimes,Rarely,Very,5,0
+7-8 hours,3,Sometimes,2,Always,sad,Sometimes,Often,Moderately,5,1
+Less than 5 hours,2,Often,2,Sometimes,Neutral,Always,Often,Slightly,4,1
+7-8 hours,4,Sometimes,3,Often,sad,Sometimes,Rarely,Slightly,3,0
+5-6 hours,5,Rarely,2,Rarely,Neutral,Rarely,Sometimes,Moderately,5,0
+7-8 hours,2,Often,2,Sometimes,Neutral,Often,Sometimes,Very,1,1
+7-8 hours,5,Sometimes,3,Often,Neutral,Sometimes,Rarely,Slightly,1,0
+7-8 hours,3,Sometimes,2,Always,sad,Often,Rarely,Moderately,1,1
+7-8 hours,3,Sometimes,1,Rarely,Neutral,Sometimes,Often,Very,4,1
+7-8 hours,4,Always,3,Often,Neutral,Sometimes,Often,Very,5,1
+5-6 hours,3,Sometimes,3,Often,Neutral,Often,Always,Very,2,1
+5-6 hours,3,Often,5,Often,Neutral,Rarely,Sometimes,Extremely,5,0
+More than 8 hours,4,Sometimes,3,Rarely,Neutral,Rarely,Sometimes,Very,2,0
+5-6 hours,1,Rarely,2,Sometimes,Neutral,Always,Often,Moderately,4,1
+5-6 hours,3,Sometimes,3,Always,Neutral,Always,Sometimes,Moderately,1,1
+5-6 hours,3,Sometimes,2,Always,Sad,Sometimes,Rarely,Very,5,1
+More than 8 hours,3,Often,3,Rarely,Neutral,Always,Sometimes,Extremely,4,0
+7-8 hours,4,Sometimes,3,Never,Sad,Always,Often,Moderately,3,1
+5-6 hours,3,Sometimes,2,Often,Neutral,Sometimes,Rarely,Slightly,5,1
+7-8 hours,3,Sometimes,2,Always,Neutral,Sometimes,Rarely,Slightly,4,0
+Less than 5 hours,4,Often,3,Often,Neutral,Often,Rarely,Moderately,5,1

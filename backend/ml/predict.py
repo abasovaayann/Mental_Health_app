@@ -2,17 +2,17 @@
 Wellness prediction pipeline.
 
 Model priority:
-1. ``wellness_user_rf.joblib`` - 10-feature model trained from survey exports
-2. ``wellness_full_rf_latest.joblib`` - 10-feature model retrained from app data
-3. ``wellness_model.pkl`` - legacy Kaggle fallback model
-
-The 10-feature models use the app's full baseline survey answers. The Kaggle
-fallback uses the older 5-feature layout and is kept for compatibility with
-the artifacts currently present in this repo.
+1. ``wellness_user_rf.joblib`` - 14-column model (9 numeric + 5 sleep one-hot)
+   trained from the survey exports. The decision threshold is tuned on
+   out-of-fold probabilities and persisted in ``wellness_user_meta.json``.
+2. ``wellness_full_rf_latest.joblib`` - same 14-column layout, retrained from
+   live app data.
+3. ``wellness_model.pkl`` - legacy Kaggle fallback model.
 """
 
 from __future__ import annotations
 
+import json
 import pathlib
 
 import joblib
@@ -21,12 +21,12 @@ import pandas as pd
 ARTIFACT_DIR = pathlib.Path(__file__).resolve().parent / "artifacts"
 
 USER_MODEL_PATH = ARTIFACT_DIR / "wellness_user_rf.joblib"
+USER_META_PATH = ARTIFACT_DIR / "wellness_user_meta.json"
 FULL_MODEL_PATH = ARTIFACT_DIR / "wellness_full_rf_latest.joblib"
 KAGGLE_MODEL_PATH = ARTIFACT_DIR / "wellness_model.pkl"
 KAGGLE_COLS_PATH = ARTIFACT_DIR / "model_columns.pkl"
 
-ALL_FEATURES: list[str] = [
-    "sleep_duration",
+NUMERIC_FEATURES: list[str] = [
     "academic_pressure",
     "financial_stress",
     "study_motivation",
@@ -37,6 +37,15 @@ ALL_FEATURES: list[str] = [
     "anxiety_level",
     "social_support",
 ]
+SLEEP_FEATURES: list[str] = [
+    "sleep_lt5",
+    "sleep_5_6",
+    "sleep_7_8",
+    "sleep_gt8",
+    "sleep_other",
+]
+ALL_FEATURES: list[str] = NUMERIC_FEATURES + SLEEP_FEATURES
+DEFAULT_THRESHOLD: float = 0.5
 
 RISK_LABELS = {
     0: {"label": "Low Risk", "color": "green", "emoji": "calm", "level": 0},
@@ -45,6 +54,7 @@ RISK_LABELS = {
 }
 
 _user_model = None
+_user_meta: dict | None = None
 _full_model = None
 _kaggle_model = None
 _kaggle_cols = None
@@ -177,6 +187,23 @@ def _load_user_model():
     return _user_model
 
 
+def _load_user_meta() -> dict:
+    global _user_meta
+    if _user_meta is None:
+        if USER_META_PATH.exists():
+            try:
+                _user_meta = json.loads(USER_META_PATH.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                _user_meta = {}
+        else:
+            _user_meta = {}
+    return _user_meta
+
+
+def _user_model_threshold() -> float:
+    return float(_load_user_meta().get("optimal_threshold", DEFAULT_THRESHOLD))
+
+
 def _load_full_model():
     global _full_model
     if _full_model is None and FULL_MODEL_PATH.exists():
@@ -202,7 +229,11 @@ def active_model_name() -> str:
     return "wellness_model_kaggle"
 
 
-def _build_prediction_payload(risk_prob: float, model_version: str) -> dict:
+def _build_prediction_payload(
+    risk_prob: float,
+    model_version: str,
+    threshold: float = DEFAULT_THRESHOLD,
+) -> dict:
     if risk_prob < 0.35:
         level = 0
     elif risk_prob < 0.65:
@@ -219,12 +250,28 @@ def _build_prediction_payload(risk_prob: float, model_version: str) -> dict:
         "risk_emoji": info["emoji"],
         "wellness_score": int(round((1 - risk_prob) * 100)),
         "model_version": model_version,
+        "is_at_risk": bool(risk_prob >= threshold),
+        "decision_threshold": round(float(threshold), 4),
     }
 
 
-def _encode_10feature_survey(survey: dict) -> dict[str, float]:
-    return {
-        "sleep_duration": _sleep_numeric_value(survey.get("sleep_duration")),
+_SLEEP_CATEGORY_TO_ONE_HOT = {
+    "less than 5 hours": "sleep_lt5",
+    "5-6 hours": "sleep_5_6",
+    "7-8 hours": "sleep_7_8",
+    "more than 8 hours": "sleep_gt8",
+    "others": "sleep_other",
+}
+
+
+def _encode_sleep_one_hot(value: object) -> dict[str, float]:
+    category = _normalize_text(_normalize_sleep_category(value))
+    active = _SLEEP_CATEGORY_TO_ONE_HOT.get(category, "sleep_other")
+    return {name: 1.0 if name == active else 0.0 for name in SLEEP_FEATURES}
+
+
+def _encode_survey(survey: dict) -> dict[str, float]:
+    encoded: dict[str, float] = {
         "academic_pressure": _map_text(survey.get("academic_pressure"), _FREQ_MAP),
         "financial_stress": _map_text(survey.get("financial_stress"), _FINANCIAL_MAP),
         "study_motivation": _map_text(survey.get("study_motivation"), _MOTIVATION_MAP),
@@ -237,14 +284,17 @@ def _encode_10feature_survey(survey: dict) -> dict[str, float]:
         "anxiety_level": _map_text(survey.get("anxiety_level"), _FREQ_MAP),
         "social_support": _map_text(survey.get("social_support"), _SUPPORT_MAP),
     }
+    encoded.update(_encode_sleep_one_hot(survey.get("sleep_duration")))
+    return encoded
 
 
 def _predict_10feature(model, survey: dict, version: str) -> dict:
-    encoded = _encode_10feature_survey(survey)
+    encoded = _encode_survey(survey)
     frame = pd.DataFrame([[encoded[name] for name in ALL_FEATURES]], columns=ALL_FEATURES)
     proba = model.predict_proba(frame)[0]
     risk_prob = float(proba[1]) if len(proba) > 1 else float(proba[0])
-    return _build_prediction_payload(risk_prob, version)
+    threshold = _user_model_threshold() if version == "wellness_user_rf" else DEFAULT_THRESHOLD
+    return _build_prediction_payload(risk_prob, version, threshold=threshold)
 
 
 def _predict_kaggle(survey: dict) -> dict:
