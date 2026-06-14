@@ -1,15 +1,15 @@
 """Characterization tests for the chatbot language detector.
 
 These lock the current behavior of the multilingual heuristics in
-app/api/routes/chatbot.py before that file is decomposed in a later phase.
+nlp/language.py (extracted from the chatbot route in Phase 2).
 """
 
 import pytest
 
-from app.api.routes.chatbot import (
-    _detect_language,
-    _is_russian_message,
-    _is_turkish_message,
+from nlp.language import (
+    detect_language as _detect_language,
+    is_russian_message as _is_russian_message,
+    is_turkish_message as _is_turkish_message,
 )
 
 pytestmark = pytest.mark.unit

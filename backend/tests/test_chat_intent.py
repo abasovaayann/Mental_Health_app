@@ -1,16 +1,16 @@
 """Characterization tests for chatbot intent detection.
 
 Locks the current behavior of context-gating and comparison-window detection
-in app/api/routes/chatbot.py before that file is split into services.
+in services/chat_intent.py (extracted from the chatbot route in Phase 2).
 """
 
 from datetime import date
 
 import pytest
 
-from app.api.routes.chatbot import (
-    _detect_comparison_intent,
-    _should_use_diary_context,
+from services.chat_intent import (
+    detect_comparison_intent as _detect_comparison_intent,
+    should_use_diary_context as _should_use_diary_context,
 )
 
 pytestmark = pytest.mark.unit
