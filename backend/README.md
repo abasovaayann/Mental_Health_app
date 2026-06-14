@@ -20,11 +20,18 @@ pip install -r requirements.txt
 - Create database: `mindtrackai_db`
 - Update `.env` file with your database credentials
 
-4. Configure local Whisper speech-to-text:
+4. Apply database migrations:
+```bash
+alembic upgrade head
+```
+- This creates/updates all tables. Run it on every fresh database and after pulling changes that add migrations.
+- The app no longer creates tables at startup — migrations are the single source of truth for the schema.
+
+5. Configure local Whisper speech-to-text:
 - Optional: set `WHISPER_MODEL` in `.env` to `tiny`, `base`, `small`, `medium`, or `large`.
 - The default model is `base`.
 
-5. Run the server:
+6. Run the server:
 ```bash
 python run.py
 ```

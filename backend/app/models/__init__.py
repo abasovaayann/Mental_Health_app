@@ -1,4 +1,5 @@
-# Models package — import all models here so Base.metadata.create_all picks them up
+# Models package — import all models here so they register on Base.metadata
+# (used by Alembic autogenerate and by any create_all in tests/tooling).
 from app.models.user import User  # noqa: F401
 from app.models.diary import DiaryEntry  # noqa: F401
 from app.models.diary_analysis import DiaryEntryAnalysis  # noqa: F401
