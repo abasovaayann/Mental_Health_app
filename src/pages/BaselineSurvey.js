@@ -1,26 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { TOTAL_STEPS, INITIAL_FORM_DATA } from '../constants/baselineSurvey';
+import { isStepValid, getSleepDurationLabel, buildSurveyPayload } from '../utils/baselineSurveyHelpers';
 
 const BaselineSurvey = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [validationError, setValidationError] = useState('');
-  const [formData, setFormData] = useState({
-    sleepDuration: '4',
-    energyLevel: '',
-    academicPressure: '',
-    studyMotivation: '',
-    concentrationDifficulty: '',
-    morningMood: '',
-    emotionalLow: '',
-    anxietyLevel: '',
-    socialSupport: '',
-    financialStress: ''
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
-  const totalSteps = 4;
+  const totalSteps = TOTAL_STEPS;
   const progress = (currentStep / totalSteps) * 100;
 
   const handleChange = (name, value) => {
@@ -36,23 +27,7 @@ const BaselineSurvey = () => {
 
   const handleNext = () => {
     // Validate current section before proceeding
-    let isValid = true;
-
-    if (currentStep === 1) {
-      if (!formData.energyLevel) {
-        isValid = false;
-      }
-    } else if (currentStep === 2) {
-      if (!formData.academicPressure || !formData.studyMotivation || !formData.concentrationDifficulty) {
-        isValid = false;
-      }
-    } else if (currentStep === 3) {
-      if (!formData.morningMood || !formData.emotionalLow || !formData.anxietyLevel) {
-        isValid = false;
-      }
-    }
-
-    if (!isValid) {
+    if (!isStepValid(currentStep, formData)) {
       setValidationError('⚠️ You must answer all questions before proceeding to the next section.');
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
       return;
@@ -77,18 +52,7 @@ const BaselineSurvey = () => {
     setLoading(true);
 
     try {
-      const surveyPayload = {
-        sleep_duration: formData.sleepDuration,
-        energy_level: formData.energyLevel,
-        academic_pressure: formData.academicPressure,
-        study_motivation: formData.studyMotivation,
-        concentration_difficulty: formData.concentrationDifficulty,
-        morning_mood: formData.morningMood,
-        emotional_low: formData.emotionalLow,
-        anxiety_level: formData.anxietyLevel,
-        social_support: formData.socialSupport,
-        financial_stress: formData.financialStress
-      };
+      const surveyPayload = buildSurveyPayload(formData);
 
       await api.post('/survey/baseline', surveyPayload);
       
@@ -202,11 +166,7 @@ const BaselineSurvey = () => {
                       />
                       <div className="mt-4 text-center">
                         <span className="inline-block px-3 py-1 bg-white dark:bg-slate-700 rounded-md shadow-sm border border-blue-100 dark:border-slate-600 text-primary font-bold">
-                          {formData.sleepDuration === '1' ? 'Less than 4 hours' : 
-                           formData.sleepDuration === '2' ? '4-5 hours' :
-                           formData.sleepDuration === '3' ? '6 hours' :
-                           formData.sleepDuration === '4' ? '7-8 hours' :
-                           'More than 8 hours'}
+                          {getSleepDurationLabel(formData.sleepDuration)}
                         </span>
                       </div>
                     </div>

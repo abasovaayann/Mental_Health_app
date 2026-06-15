@@ -2,41 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
-
-const SUGGESTION_CHIPS = [
-  { label: 'Analyze my mood', icon: 'insights', message: 'Analyze my recent diary entries — what mood and themes stand out?', mode: 'weekly' },
-  { label: 'Give me a recommendation', icon: 'recommend', message: 'Based on what you see in my diary, what lifestyle change should I try?', mode: 'general' },
-  { label: 'Summarize my week', icon: 'summarize', message: "Give me a summary of this week's entries.", mode: 'weekly' },
-  { label: 'What caused my stress?', icon: 'psychology_alt', message: 'Looking at recent entries, what seems to be triggering my stress most?', mode: 'general' },
-];
-
-const formatTime = (iso) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-};
-
-const formatRelative = (iso) => {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '';
-  const diff = Date.now() - d.getTime();
-  const min = Math.floor(diff / 60000);
-  if (min < 1) return 'now';
-  if (min < 60) return `${min}m ago`;
-  const hour = Math.floor(min / 60);
-  if (hour < 24) return `${hour}h ago`;
-  const day = Math.floor(hour / 24);
-  if (day === 1) return 'Yesterday';
-  if (day < 7) return d.toLocaleDateString('en-US', { weekday: 'short' });
-  return d.toLocaleDateString();
-};
-
-const getAudioMimeType = () => {
-  const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4'];
-  return candidates.find((t) => MediaRecorder.isTypeSupported(t)) || '';
-};
+import { SUGGESTION_CHIPS } from '../constants/insights';
+import { formatTime, formatRelative, getAudioMimeType, formatDuration } from '../utils/insightsHelpers';
 
 // Renders **bold** and *italic* markdown emphasis while leaving newlines
 // and other punctuation alone. The double-asterisk split runs first so that
@@ -277,9 +244,6 @@ const Insights = () => {
       sendMessage();
     }
   };
-
-  const formatDuration = (s) =>
-    `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const startNewChat = async () => {
     if (loading) return;
