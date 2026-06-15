@@ -5,7 +5,8 @@ import os
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent
+# Script lives in scripts/; the repo root (which holds backend/ and src/) is one level up.
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 print("\n" + "=" * 80)
 print("EMAIL REMINDERS SYSTEM - VERIFICATION CHECKLIST")

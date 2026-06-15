@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import tempfile
 from datetime import datetime
@@ -19,6 +20,8 @@ from app.schemas.diary import (
 )
 from app.utils.dependencies import get_current_user
 from app.services.analysis_service import analyze_text
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 _whisper_model = None
@@ -127,8 +130,8 @@ def _save_or_refresh_analysis(db: Session, entry: DiaryEntry) -> None:
     """
     try:
         result = analyze_text(entry.content or "")
-    except Exception as exc:  # pragma: no cover — defensive
-        print(f"[diary-analysis] inference failed for entry {entry.id}: {exc}")
+    except Exception:  # pragma: no cover — defensive
+        logger.exception("[diary-analysis] inference failed for entry %s", entry.id)
         return
 
     existing = (

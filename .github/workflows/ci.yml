@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  backend:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      # requirements-dev.txt pulls in requirements.txt (-r). The full stack is
+      # heavy (whisper/torch/transformers) but the pip cache keeps reruns fast.
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # tests/conftest.py sets sqlite DATABASE_URL + SECRET_KEY, so no real
+      # database or .env is needed.
+      - name: Run tests
+        run: pytest -q
+
+  frontend:
+    name: Frontend (build + tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # CI=true makes react-scripts treat ESLint warnings as errors and run the
+      # test suite once (no watch mode).
+      - name: Build
+        run: npm run build
+        env:
+          CI: true
+
+      - name: Run tests
+        run: npx react-scripts test --watchAll=false
+        env:
+          CI: true

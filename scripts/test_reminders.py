@@ -12,8 +12,8 @@ import sys
 import json
 from pathlib import Path
 
-# Add backend to path
-backend_path = Path(__file__).parent / "backend"
+# Add backend to path (script lives in scripts/, repo root is one level up)
+backend_path = Path(__file__).resolve().parent.parent / "backend"
 sys.path.insert(0, str(backend_path))
 
 os.environ.setdefault("ENVIRONMENT", "development")
@@ -41,7 +41,7 @@ def test_reminder_system():
     # Test 2: Email Service
     print("\n✓ TEST 2: Email Service")
     try:
-        from services.email_service import get_email_service, EmailService
+        from app.services.email_service import get_email_service, EmailService
 
         service = get_email_service()
         print(f"  ✓ EmailService initialized")
@@ -55,7 +55,7 @@ def test_reminder_system():
     # Test 3: Reminder Service
     print("\n✓ TEST 3: Reminder Service")
     try:
-        from services.reminder_service import ReminderService
+        from app.services.reminder_service import ReminderService
         from datetime import datetime, time
         import pytz
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api/axios';
 
 const TIMEZONES = [
@@ -31,12 +31,7 @@ const ReminderSettings = ({ onToast }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load reminders on mount
-  useEffect(() => {
-    loadReminders();
-  }, []);
-
-  const loadReminders = async () => {
+  const loadReminders = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/reminders/preferences');
@@ -49,7 +44,12 @@ const ReminderSettings = ({ onToast }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [onToast]);
+
+  // Load reminders on mount
+  useEffect(() => {
+    loadReminders();
+  }, [loadReminders]);
 
   const handleUpdate = async () => {
     try {

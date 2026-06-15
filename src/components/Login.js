@@ -102,12 +102,12 @@ const Login = ({ onSuccess }) => {
         </label>
 
         <div className="flex justify-end">
-          <a
+          <button
+            type="button"
             className="text-sm font-semibold text-primary hover:text-primary-dark hover:underline"
-            href="#"
           >
             Forgot Password?
-          </a>
+          </button>
         </div>
 
         <button
@@ -121,13 +121,13 @@ const Login = ({ onSuccess }) => {
 
       <p className="text-center text-xs text-text-muted dark:text-gray-400 mt-4">
         By continuing, you agree to MindTrackAi's{' '}
-        <a className="font-medium text-primary hover:underline" href="#">
+        <button type="button" className="font-medium text-primary hover:underline">
           Terms of Service
-        </a>{' '}
+        </button>{' '}
         and{' '}
-        <a className="font-medium text-primary hover:underline" href="#">
+        <button type="button" className="font-medium text-primary hover:underline">
           Privacy Policy
-        </a>
+        </button>
         .
       </p>
 

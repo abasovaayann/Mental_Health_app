@@ -8,6 +8,7 @@ independently testable modules:
   - services.chat_llm     → Claude call, prompt assembly, history, fallbacks
 """
 
+import logging
 from datetime import date, timedelta
 from typing import Optional
 
@@ -39,6 +40,8 @@ from app.services.chat_llm import (
     call_claude,
     load_chat_history,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -341,8 +344,8 @@ def chat(
         db.commit()
 
         return ChatResponse(response=ai_text, used_analysis_memory=used_memory)
-    except Exception as exc:
-        print(f"Chatbot fallback triggered: {type(exc).__name__}: {exc}")
+    except Exception:
+        logger.exception("Chatbot fallback triggered")
         ai_text = (
             build_diary_fallback_response(payload.message, entries, analyses)
             if include_diary_context
