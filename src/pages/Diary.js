@@ -2,131 +2,25 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
-
-const DAILY_PROMPTS = [
-  'What happened today that affected your mood the most, and why do you think it stayed with you?',
-  'Which moment today gave you even a small sense of relief or calm?',
-  'What thought kept repeating in your mind, and what might it be asking for?',
-  'If you could offer yourself one kind sentence today, what would it be?',
-  'What felt heavy today, and what helped you carry it?'
-];
-
-const TAG_SUGGESTIONS = ['study', 'sleep', 'exam', 'family', 'anxiety', 'focus', 'gratitude', 'stress'];
-
-const CALENDAR_VISIBLE_ENTRIES_LIMIT = 6;
-
-const VOICE_LANGUAGES = [
-  { value: 'en-US', label: 'English' },
-  { value: 'ru-RU', label: 'Russian' },
-  { value: 'tr-TR', label: 'Turkish' },
-];
-
-const formatDateInput = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const formatMonthLabel = (value) => {
-  const parsed = new Date(`${value}T00:00:00`);
-  return parsed.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-};
-
-const formatDateShort = (value) => {
-  const parsed = new Date(`${value}T00:00:00`);
-  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-};
-
-const formatDuration = (seconds) => {
-  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-  const ss = String(seconds % 60).padStart(2, '0');
-  return `${mm}:${ss}`;
-};
-
-const moodMeta = {
-  positive: {
-    label: 'Positive',
-    card: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
-    dot: 'bg-emerald-500',
-    calendar: 'bg-emerald-500 text-white hover:bg-emerald-600',
-    calendarToday: 'bg-emerald-600 text-white ring-2 ring-primary/60',
-    soft: 'ring-emerald-200 dark:ring-emerald-500/50',
-  },
-  neutral: {
-    label: 'Neutral',
-    card: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-    dot: 'bg-amber-500',
-    calendar: 'bg-amber-500 text-white hover:bg-amber-600',
-    calendarToday: 'bg-amber-600 text-white ring-2 ring-primary/60',
-    soft: 'ring-amber-200 dark:ring-amber-500/50',
-  },
-  negative: {
-    label: 'Negative',
-    card: 'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
-    dot: 'bg-rose-500',
-    calendar: 'bg-rose-500 text-white hover:bg-rose-600',
-    calendarToday: 'bg-rose-600 text-white ring-2 ring-primary/60',
-    soft: 'ring-rose-200 dark:ring-rose-500/50',
-  },
-};
-
-const moodRank = { negative: 3, neutral: 2, positive: 1 };
-
-const formatReadableDate = (value) => {
-  const parsed = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Today';
-  }
-
-  return parsed.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
-
-const getCalendarGrid = (year, month) => {
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-  const startOffset = (firstDay.getDay() + 6) % 7;
-  const days = [];
-
-  const prevMonthLastDate = new Date(year, month, 0).getDate();
-  for (let i = startOffset - 1; i >= 0; i -= 1) {
-    days.push({ day: prevMonthLastDate - i, currentMonth: false });
-  }
-
-  for (let day = 1; day <= lastDay.getDate(); day += 1) {
-    days.push({ day, currentMonth: true });
-  }
-
-  let nextMonthDay = 1;
-  while (days.length < 42) {
-    days.push({ day: nextMonthDay, currentMonth: false });
-    nextMonthDay += 1;
-  }
-
-  return days;
-};
-
-const isFutureDate = (dateValue, todayValue) => dateValue > todayValue;
-
-const mapApiEntryToUi = (entry) => {
-  const parsedDate = entry.created_at ? new Date(entry.created_at) : new Date();
-  const safeTags = Array.isArray(entry.tags) ? entry.tags : [];
-
-  return {
-    id: String(entry.id),
-    date: entry.entry_date,
-    time: parsedDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-    title: entry.title,
-    content: entry.content,
-    preview: entry.content.slice(0, 120) + (entry.content.length > 120 ? '...' : ''),
-    mood: entry.mood,
-    tags: safeTags,
-  };
-};
+import {
+  DAILY_PROMPTS,
+  TAG_SUGGESTIONS,
+  CALENDAR_VISIBLE_ENTRIES_LIMIT,
+  VOICE_LANGUAGES,
+  moodMeta,
+  moodRank,
+} from '../constants/diary';
+import {
+  formatDateInput,
+  formatMonthLabel,
+  formatDateShort,
+  formatDuration,
+  formatReadableDate,
+  getCalendarGrid,
+  isFutureDate,
+  mapApiEntryToUi,
+} from '../utils/diaryHelpers';
+import { useVoiceRecorder } from '../hooks/useVoiceRecorder';
 
 const Diary = ({ mode = 'edit' }) => {
   const navigate = useNavigate();
@@ -154,49 +48,35 @@ const Diary = ({ mode = 'edit' }) => {
   const [draftState, setDraftState] = useState('idle');
   const [saveState, setSaveState] = useState('idle');
   const [saveMessage, setSaveMessage] = useState('');
-  const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [recordSeconds, setRecordSeconds] = useState(0);
-  const [transcript, setTranscript] = useState('');
-  const [voiceLanguage, setVoiceLanguage] = useState('en-US');
-  const [recordingError, setRecordingError] = useState('');
-  const [recordingStatus, setRecordingStatus] = useState('Ready');
-  const [interimTranscript, setInterimTranscript] = useState('');
   const [sameDayModalOpen, setSameDayModalOpen] = useState(false);
   const [recentEntriesModalOpen, setRecentEntriesModalOpen] = useState(false);
-  const mediaRecorderRef = useRef(null);
-  const mediaStreamRef = useRef(null);
-  const recognitionRef = useRef(null);
-  const audioChunksRef = useRef([]);
-  const audioMimeTypeRef = useRef('');
-  const voiceNoteBaseContentRef = useRef('');
-  const browserFinalTranscriptRef = useRef('');
-  const liveTranscriptRef = useRef('');
   const suppressDraftSaveRef = useRef(false);
   const suppressEntryHydrationRef = useRef(false);
-  const voiceLanguageRef = useRef('en-US');
-  const isPausedRef = useRef(false);
-  const isRecordingRef = useRef(false);
-  const timerRef = useRef(null);
-  const [isTranscribing, setIsTranscribing] = useState(false);
+
+  const {
+    isRecording,
+    isPaused,
+    recordSeconds,
+    transcript,
+    interimTranscript,
+    voiceLanguage,
+    setVoiceLanguage,
+    recordingError,
+    recordingStatus,
+    isTranscribing,
+    speechSupported,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopAndSaveRecording,
+    discardRecording,
+    resetVoiceState,
+  } = useVoiceRecorder({ content, setContent });
+
   const draftStorageKey = useMemo(
     () => (isCreateRoute ? 'diary_draft_new_entry' : `diary_draft_${selectedDate}`),
     [isCreateRoute, selectedDate]
   );
-
-  const speechSupported = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return Boolean(navigator.mediaDevices?.getUserMedia && window.MediaRecorder);
-  }, []);
-
-  const browserSpeechSupported = useMemo(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-    return Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
-  }, []);
 
   useEffect(() => {
     // Cleanup legacy local-storage entry cache now that diary uses database-backed APIs.
@@ -246,14 +126,6 @@ const Diary = ({ mode = 'edit' }) => {
 
     loadEntries();
   }, []);
-
-  useEffect(() => {
-    voiceLanguageRef.current = voiceLanguage;
-  }, [voiceLanguage]);
-
-  useEffect(() => {
-    isPausedRef.current = isPaused;
-  }, [isPaused]);
 
   useEffect(() => {
     if (!isEditorPage) {
@@ -351,28 +223,6 @@ const Diary = ({ mode = 'edit' }) => {
     return () => clearTimeout(timeout);
   }, [content, draftStorageKey, isEditorPage, selectedMood, tags, title]);
 
-  // Cleanup active audio capture on unmount
-  useEffect(() => {
-    return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        mediaRecorderRef.current.stop();
-      }
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch (error) {
-          // Ignore abort errors during unmount cleanup.
-        }
-      }
-    };
-  }, []);
-
   useEffect(() => {
     if (saveState !== 'success') {
       return undefined;
@@ -398,10 +248,6 @@ const Diary = ({ mode = 'edit' }) => {
   const wordsCount = useMemo(() => {
     return content.trim() ? content.trim().split(/\s+/).length : 0;
   }, [content]);
-
-
-
-
 
   const readMinutes = Math.max(1, Math.ceil(wordsCount / 180));
   const isSaveDisabled = !title.trim() || !content.trim();
@@ -461,18 +307,13 @@ const Diary = ({ mode = 'edit' }) => {
       localStorage.removeItem(draftStorageKey);
       suppressDraftSaveRef.current = true;
       suppressEntryHydrationRef.current = true;
-      voiceNoteBaseContentRef.current = '';
-      browserFinalTranscriptRef.current = '';
-      liveTranscriptRef.current = '';
+      resetVoiceState();
       setEditingEntryId(null);
       setTitle('');
       setContent('');
       setSelectedMood('neutral');
       setTags([]);
       setTagInput('');
-      setTranscript('');
-      setInterimTranscript('');
-      setRecordingStatus('Ready');
       setDraftState('idle');
       setSaveState('success');
       setSaveMessage(wasEditing ? 'Entry updated successfully.' : 'Entry saved successfully.');
@@ -497,329 +338,6 @@ const Diary = ({ mode = 'edit' }) => {
 
   const removeTag = (value) => {
     setTags((prev) => prev.filter((tag) => tag !== value));
-  };
-
-  /* ---------- Helper: start the mm:ss timer ---------- */
-  const startTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    timerRef.current = setInterval(() => {
-      setRecordSeconds((prev) => prev + 1);
-    }, 1000);
-  };
-
-  /* ---------- Helper: stop the mm:ss timer ---------- */
-  const stopTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  /* ---------- Helper: create and transcribe an audio recording ---------- */
-  const getAudioMimeType = () => {
-    const candidates = [
-      'audio/webm;codecs=opus',
-      'audio/webm',
-      'audio/ogg;codecs=opus',
-      'audio/ogg',
-      'audio/mp4',
-    ];
-    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) || '';
-  };
-
-  const stopMediaStream = () => {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
-  };
-
-  const composeVoiceNoteContent = (baseContent, voiceText) => {
-    const cleanBase = (baseContent || '').trimEnd();
-    const cleanVoiceText = (voiceText || '').trim();
-    if (!cleanVoiceText) {
-      return cleanBase;
-    }
-    return cleanBase ? `${cleanBase}\n\nVoice note: ${cleanVoiceText}` : `Voice note: ${cleanVoiceText}`;
-  };
-
-  const applyLiveVoiceText = (text) => {
-    const liveText = (text || '').trim();
-    liveTranscriptRef.current = liveText;
-  };
-
-  const stopBrowserRecognition = (useAbort = true) => {
-    const recognition = recognitionRef.current;
-    if (!recognition) {
-      return;
-    }
-
-    try {
-      if (useAbort) {
-        recognition.abort();
-      } else {
-        recognition.stop();
-      }
-    } catch (error) {
-      // Ignore stop/abort race conditions from browser API.
-    }
-  };
-
-  const startBrowserRecognition = () => {
-    if (!browserSpeechSupported) {
-      return;
-    }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!recognitionRef.current) {
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onresult = (event) => {
-        let interimText = '';
-        let finalChunk = '';
-
-        for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          const segment = event.results[i][0]?.transcript || '';
-          if (event.results[i].isFinal) {
-            finalChunk += segment;
-          } else {
-            interimText += segment;
-          }
-        }
-
-        if (finalChunk.trim()) {
-          browserFinalTranscriptRef.current = `${browserFinalTranscriptRef.current} ${finalChunk}`.trim();
-          setTranscript(browserFinalTranscriptRef.current);
-        }
-
-        setInterimTranscript(interimText.trim());
-        const mergedLiveText = `${browserFinalTranscriptRef.current} ${interimText}`.trim();
-        applyLiveVoiceText(mergedLiveText);
-      };
-
-      recognition.onerror = (event) => {
-        if (isRecordingRef.current && event.error !== 'aborted') {
-          setRecordingError(`Live speech error: ${event.error}`);
-        }
-      };
-
-      recognition.onend = () => {
-        if (!isRecordingRef.current || isPausedRef.current) {
-          return;
-        }
-        try {
-          recognition.lang = voiceLanguageRef.current;
-          recognition.start();
-        } catch (error) {
-          // Browser may reject rapid restarts; ignore and keep Whisper finalization.
-        }
-      };
-
-      recognitionRef.current = recognition;
-    }
-
-    try {
-      recognitionRef.current.lang = voiceLanguageRef.current;
-      recognitionRef.current.start();
-    } catch (error) {
-      // Ignore duplicate start errors if recognition is already active.
-    }
-  };
-
-  const stopRecorder = () =>
-    new Promise((resolve) => {
-      const recorder = mediaRecorderRef.current;
-      const mimeType = audioMimeTypeRef.current || recorder?.mimeType || 'audio/webm';
-
-      const buildBlob = () => new Blob(audioChunksRef.current, { type: mimeType });
-
-      if (!recorder || recorder.state === 'inactive') {
-        stopMediaStream();
-        resolve(buildBlob());
-        return;
-      }
-
-      recorder.onstop = () => {
-        stopMediaStream();
-        mediaRecorderRef.current = null;
-        resolve(buildBlob());
-      };
-      recorder.stop();
-    });
-
-  const transcribeRecording = async (audioBlob) => {
-    if (!audioBlob.size) {
-      return '';
-    }
-
-    const extension = audioBlob.type.includes('ogg') ? 'ogg' : audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
-    const formData = new FormData();
-    formData.append('audio_file', audioBlob, `voice-note.${extension}`);
-    formData.append('language_code', voiceLanguage);
-
-    const response = await api.post('/diary/speech-to-text', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
-    return (response.data?.transcript || '').trim();
-  };
-
-  /* ---------- Start recording (Whisper upload) ---------- */
-  const startRecording = async () => {
-    if (!speechSupported || isRecordingRef.current || isTranscribing) {
-      return;
-    }
-
-    setRecordingError('');
-    setRecordingStatus('Listening...');
-
-    if (!isPaused) {
-      setTranscript('');
-      setInterimTranscript('');
-      setRecordSeconds(0);
-      audioChunksRef.current = [];
-      voiceNoteBaseContentRef.current = content;
-      browserFinalTranscriptRef.current = '';
-      liveTranscriptRef.current = '';
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = getAudioMimeType();
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-
-      audioMimeTypeRef.current = mimeType || recorder.mimeType || 'audio/webm';
-      mediaStreamRef.current = stream;
-      mediaRecorderRef.current = recorder;
-
-      recorder.ondataavailable = (event) => {
-        if (event.data?.size) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-      recorder.onerror = () => {
-        setRecordingError('Recording failed. Please try again.');
-        stopTimer();
-        stopMediaStream();
-        isRecordingRef.current = false;
-        setIsRecording(false);
-        setIsPaused(false);
-        setRecordingStatus('Ready');
-      };
-
-      isRecordingRef.current = true;
-      setIsRecording(true);
-      setIsPaused(false);
-      recorder.start(1000);
-      startBrowserRecognition();
-      startTimer();
-    } catch (error) {
-      setRecordingError('Microphone access was blocked or unavailable.');
-      setRecordingStatus('Ready');
-      stopMediaStream();
-      isRecordingRef.current = false;
-      setIsRecording(false);
-      setIsPaused(false);
-      if (!isPaused) {
-        setRecordSeconds(0);
-      }
-    }
-  };
-
-  /* ---------- Pause recording ---------- */
-  const pauseRecording = () => {
-    const recorder = mediaRecorderRef.current;
-    if (!recorder || !isRecordingRef.current) {
-      return;
-    }
-
-    isRecordingRef.current = false;
-    setIsPaused(true);
-    setRecordingStatus('Paused');
-    setInterimTranscript('');
-
-    if (recorder.state === 'recording') {
-      recorder.pause();
-    }
-    stopBrowserRecognition();
-    stopTimer();
-  };
-
-  /* ---------- Resume recording ---------- */
-  const resumeRecording = () => {
-    const recorder = mediaRecorderRef.current;
-    if (!recorder || recorder.state !== 'paused') {
-      startRecording();
-      return;
-    }
-
-    setRecordingError('');
-    recorder.resume();
-    isRecordingRef.current = true;
-    setIsRecording(true);
-    setIsPaused(false);
-    setRecordingStatus('Listening...');
-    startBrowserRecognition();
-    startTimer();
-  };
-
-  /* ---------- Stop, transcribe, and save ---------- */
-  const stopAndSaveRecording = async () => {
-    if (!mediaRecorderRef.current && !audioChunksRef.current.length) {
-      return;
-    }
-
-    isRecordingRef.current = false;
-    setIsRecording(false);
-    setIsPaused(false);
-    stopBrowserRecognition();
-    stopTimer();
-    setIsTranscribing(true);
-    setRecordingStatus('Transcribing...');
-
-    try {
-      const audioBlob = await stopRecorder();
-      const finalVoiceNote = await transcribeRecording(audioBlob);
-      const resolvedVoiceNote = finalVoiceNote || liveTranscriptRef.current;
-      setTranscript(resolvedVoiceNote);
-      setInterimTranscript('');
-      applyLiveVoiceText(resolvedVoiceNote);
-      setContent(composeVoiceNoteContent(voiceNoteBaseContentRef.current, resolvedVoiceNote));
-      setRecordingStatus('Saved');
-    } catch (error) {
-      console.error('Failed to transcribe voice note', error);
-      setRecordingError(error.response?.data?.detail || 'Whisper transcription failed. Please try again.');
-      setRecordingStatus('Ready');
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
-
-  /* ---------- Discard recording ---------- */
-  const discardRecording = async () => {
-    if (mediaRecorderRef.current) {
-      await stopRecorder();
-    } else {
-      stopMediaStream();
-    }
-
-    stopBrowserRecognition();
-
-    isRecordingRef.current = false;
-    setIsRecording(false);
-    setIsPaused(false);
-    setTranscript('');
-    setInterimTranscript('');
-    browserFinalTranscriptRef.current = '';
-    liveTranscriptRef.current = '';
-    voiceNoteBaseContentRef.current = '';
-    setRecordingStatus('Ready');
-    setRecordingError('');
-    setRecordSeconds(0);
-    stopTimer();
   };
 
   const shiftMonth = (value) => {
@@ -1554,4 +1072,3 @@ const Diary = ({ mode = 'edit' }) => {
 };
 
 export default Diary;
-
