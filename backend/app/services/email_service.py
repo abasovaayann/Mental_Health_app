@@ -129,23 +129,28 @@ class EmailService:
             plain_text=plain_text,
         )
 
-    def send_verification_email(
+    def _send_code_email(
         self,
+        *,
         recipient_email: str,
         user_name: str,
         code: str,
-        expires_minutes: int = 15,
+        subject: str,
+        intro: str,
+        note: str,
+        plain_label: str,
     ) -> bool:
-        """Send a 6-digit email-verification code."""
+        """Send a one-time code email (verification or password reset).
 
-        subject = "Verify your email 🔐 | MindTrackAi"
-
+        ``intro`` is the sentence above the code, ``note`` the expiry/ignore
+        sentence below it, and ``plain_label`` names the code in plain text.
+        """
         html_content = f"""
         <html>
             <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
                 <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
                     <h2 style="color: #4f46e5;">Hi {user_name}! 👋</h2>
-                    <p>Use this code to verify your email address:</p>
+                    <p>{intro}</p>
                     <div style="text-align: center; margin: 30px 0;">
                         <span style="display: inline-block; padding: 14px 28px; background-color: #eef2ff;
                                      color: #4f46e5; font-size: 32px; font-weight: bold; letter-spacing: 8px;
@@ -153,10 +158,7 @@ class EmailService:
                             {code}
                         </span>
                     </div>
-                    <p style="color: #666; font-size: 14px;">
-                        This code expires in {expires_minutes} minutes. If you didn't create a
-                        MindTrackAi account, you can safely ignore this email.
-                    </p>
+                    <p style="color: #666; font-size: 14px;">{note}</p>
                     <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
                     <p style="color: #999; font-size: 12px;">
                         Best regards,<br><strong>MindTrackAi Team 💚</strong>
@@ -168,9 +170,8 @@ class EmailService:
 
         plain_text = (
             f"Hi {user_name},\n\n"
-            f"Your MindTrackAi email verification code is: {code}\n\n"
-            f"It expires in {expires_minutes} minutes. If you didn't create an "
-            f"account, you can ignore this email.\n\n"
+            f"Your MindTrackAi {plain_label} is: {code}\n\n"
+            f"{note}\n\n"
             f"MindTrackAi Team"
         )
 
@@ -179,6 +180,27 @@ class EmailService:
             subject=subject,
             html_content=html_content,
             plain_text=plain_text,
+        )
+
+    def send_verification_email(
+        self,
+        recipient_email: str,
+        user_name: str,
+        code: str,
+        expires_minutes: int = 15,
+    ) -> bool:
+        """Send a 6-digit email-verification code."""
+        return self._send_code_email(
+            recipient_email=recipient_email,
+            user_name=user_name,
+            code=code,
+            subject="Verify your email 🔐 | MindTrackAi",
+            intro="Use this code to verify your email address:",
+            note=(
+                f"This code expires in {expires_minutes} minutes. If you didn't "
+                "create a MindTrackAi account, you can safely ignore this email."
+            ),
+            plain_label="email verification code",
         )
 
     def send_password_reset_email(
@@ -189,48 +211,18 @@ class EmailService:
         expires_minutes: int = 15,
     ) -> bool:
         """Send a 6-digit password-reset code."""
-
-        subject = "Reset your password 🔑 | MindTrackAi"
-
-        html_content = f"""
-        <html>
-            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                    <h2 style="color: #4f46e5;">Hi {user_name}! 👋</h2>
-                    <p>We received a request to reset your password. Use this code to continue:</p>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <span style="display: inline-block; padding: 14px 28px; background-color: #eef2ff;
-                                     color: #4f46e5; font-size: 32px; font-weight: bold; letter-spacing: 8px;
-                                     border-radius: 8px;">
-                            {code}
-                        </span>
-                    </div>
-                    <p style="color: #666; font-size: 14px;">
-                        This code expires in {expires_minutes} minutes. If you didn't request a
-                        password reset, you can safely ignore this email — your password stays the same.
-                    </p>
-                    <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-                    <p style="color: #999; font-size: 12px;">
-                        Best regards,<br><strong>MindTrackAi Team 💚</strong>
-                    </p>
-                </div>
-            </body>
-        </html>
-        """
-
-        plain_text = (
-            f"Hi {user_name},\n\n"
-            f"Your MindTrackAi password reset code is: {code}\n\n"
-            f"It expires in {expires_minutes} minutes. If you didn't request this, "
-            f"ignore this email — your password is unchanged.\n\n"
-            f"MindTrackAi Team"
-        )
-
-        return self._send_email(
+        return self._send_code_email(
             recipient_email=recipient_email,
-            subject=subject,
-            html_content=html_content,
-            plain_text=plain_text,
+            user_name=user_name,
+            code=code,
+            subject="Reset your password 🔑 | MindTrackAi",
+            intro="We received a request to reset your password. Use this code to continue:",
+            note=(
+                f"This code expires in {expires_minutes} minutes. If you didn't "
+                "request a password reset, you can safely ignore this email — "
+                "your password stays the same."
+            ),
+            plain_label="password reset code",
         )
 
     def _send_email(
