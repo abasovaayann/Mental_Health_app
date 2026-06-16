@@ -1,276 +1,209 @@
 # MindTrackAi 💚
 
-A full-stack mental health tracking application with mood monitoring, email reminders, and AI-powered insights.
+A full-stack, multilingual mental-health tracking app: daily mood check-ins, voice/text diary entries with AI sentiment & emotion analysis, a diary-aware AI companion, a machine-learning wellness score, and verified, timezone-aware email reminders.
 
-## 📋 Project Overview
+> Languages supported across the experience: **English, Turkish, Russian.**
 
-MindTrackAi helps users track their mental health through daily mood check-ins, journal entries, and automated reminders. The app features:
+## 📋 Features
 
-- **User Authentication** - Secure login with JWT tokens
-- **Daily Mood Tracking** - Log mood and emotional states
-- **Email Reminders** - Configurable daily reminders for check-ins
-- **Journal Entries** - Write and store mental health reflections
-- **AI Insights** - Machine learning analysis of mood patterns
-- **Responsive UI** - Works on desktop and mobile devices
+- **Secure accounts** — JWT access/refresh auth, bcrypt hashing, rate limiting, and **mandatory email verification** (a 6-digit code; unverified accounts can't access app data).
+- **Password reset** — emailed 6-digit reset code → set a new password.
+- **Daily check-ins** — mood / sleep / energy, one per day.
+- **Diary** — typed or **spoken** entries (local Whisper speech-to-text), automatically analyzed for sentiment, emotion, and overall mood.
+- **AI insights** — a scikit-learn wellness/risk score from your baseline survey, plus trends over time.
+- **AI companion** — a diary-aware chatbot powered by Anthropic Claude, with offline fallbacks.
+- **Email reminders** — pick a time, timezone, and frequency; reminders are sent only to verified addresses and fire reliably at your chosen time.
 
 ## 🏗️ Project Structure
 
 ```
 Mental_Health_app/
-├── frontend/               # React application
-│   ├── src/
-│   │   ├── components/    # Reusable React components
-│   │   ├── pages/         # Page components
-│   │   └── App.js         # Main app component
-│   ├── public/            # Static assets
-│   └── package.json       # Frontend dependencies
+├── src/                       # React frontend (Create React App)
+│   ├── api/                   # axios instance + auth service
+│   ├── components/            # Reusable components (Login, Register, ReminderSettings, …)
+│   ├── pages/                 # AuthPage, VerifyEmail, ForgotPassword, Dashboard, Diary, Settings, …
+│   └── App.js                 # Routes
+├── public/                    # Static assets
+├── package.json               # Frontend dependencies
 │
-├── backend/               # FastAPI application
+├── backend/
 │   ├── app/
-│   │   ├── api/          # API routes
-│   │   ├── models/       # Database models
-│   │   ├── config.py     # Configuration
-│   │   └── main.py       # FastAPI app setup
-│   ├── services/         # Business logic
-│   ├── ml/               # Machine learning models
-│   ├── nlp/              # Natural language processing
-│   ├── requirements.txt  # Backend dependencies
-│   ├── run.py           # Start the backend server
-│   └── .env             # Environment variables
+│   │   ├── api/routes/        # auth, survey, diary, chatbot, reminders
+│   │   ├── api/router.py      # Router wiring (data routers require a verified email)
+│   │   ├── services/          # analysis, chat_*, reminder, email, verification
+│   │   ├── nlp/               # sentiment, emotion, language detection
+│   │   ├── models/            # SQLAlchemy ORM tables
+│   │   ├── schemas/           # Pydantic request/response models
+│   │   ├── utils/             # auth (JWT/bcrypt), dependencies
+│   │   ├── config.py          # pydantic-settings config
+│   │   └── main.py            # App factory + lifespan (reminder loop, email check)
+│   ├── ml/                    # Offline training pipeline, artifacts, charts
+│   ├── migrations/            # Alembic schema history
+│   ├── tests/                 # pytest suite
+│   ├── requirements.txt
+│   ├── run.py                 # Dev entrypoint (uvicorn)
+│   └── .env.example
 │
-├── test_reminders.py     # Email reminder system tests
-├── verify_setup.py       # Feature verification checklist
-└── README.md            # This file
+├── scripts/                   # Helper scripts (e.g. test_reminders.py)
+└── README.md
 ```
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+- **Node.js** 16+ and npm
+- **Python** 3.10+
+- **PostgreSQL** 13+
+- **ffmpeg** — bundled via `imageio-ffmpeg`, no manual install needed
 
-- **Node.js** (v14+) and npm
-- **Python** (v3.8+)
-- **PostgreSQL** (optional - for production)
+### Backend
 
-### Backend Setup
-
-1. Navigate to the backend directory:
 ```bash
 cd backend
-```
-
-2. Create and activate a virtual environment:
-```bash
 python -m venv venv
-venv\Scripts\activate  # Windows
-# source venv/bin/activate  # macOS/Linux
-```
+.\venv\Scripts\Activate.ps1      # Windows PowerShell
+# source venv/bin/activate        # macOS/Linux
 
-3. Install dependencies:
-```bash
 pip install -r requirements.txt
+
+copy .env.example .env            # then edit .env (see Configuration)
+
+alembic upgrade head              # create/upgrade the database schema
+python run.py                     # start the API on http://localhost:8000
 ```
 
-4. Configure environment variables:
+API docs (Swagger UI): `http://localhost:8000/docs`
+
+> **First run on an existing DB?** If tables already exist but Alembic was never initialized,
+> stamp the current revision before upgrading: `alembic stamp head`.
+
+### Frontend
+
 ```bash
-# Copy the example file and update with your settings
-copy .env.example .env
-# Edit .env with your database and email credentials
-```
-
-5. Start the backend server:
-```bash
-python run.py
-```
-
-The API will be available at: `http://localhost:8000`
-- API Documentation: `http://localhost:8000/docs` (Swagger UI)
-
-### Frontend Setup
-
-1. In a new terminal, navigate to the project root:
-```bash
-cd Mental_Health_app
-```
-
-2. Install dependencies:
-```bash
+# from the project root, in a second terminal
 npm install
+npm start                         # opens http://localhost:3000
 ```
 
-3. Start the development server:
-```bash
-npm start
-```
-
-The app will open at: `http://localhost:3000`
+Both servers must run together — the frontend (`:3000`) talks to the backend (`:8000`).
 
 ## ⚙️ Configuration
 
-### Environment Variables
-
-Create a `.env` file in the `backend/` directory:
+Create `backend/.env` (copied from `.env.example`):
 
 ```env
 # Database
 DATABASE_URL=postgresql://user:password@localhost/mindtrackai_db
 
-# JWT
-SECRET_KEY=your-secret-key-here
+# Auth
+SECRET_KEY=change-me-to-a-long-random-string
 
-# Email Reminders
+# Email (Gmail SMTP) — used for verification, password reset, and reminders
 EMAIL_FROM=your-email@gmail.com
-EMAIL_PASSWORD=your-gmail-app-password
+EMAIL_PASSWORD=your-16-char-gmail-app-password
 SMTP_SERVER=smtp.gmail.com
 SMTP_PORT=587
 
-# Whisper (Speech-to-Text)
-WHISPER_MODEL=base  # tiny, base, small, medium, large
+# Speech-to-text
+WHISPER_MODEL=base                # tiny | base | small | medium | large
 
-# Environment
+# Chatbot (optional; offline fallbacks used if unset)
+ANTHROPIC_API_KEY=sk-ant-...
+
 ENVIRONMENT=development
 ```
 
-## 📧 Email Reminders Setup
+> `.env` is gitignored — **never commit real credentials.**
 
-The app includes an automated email reminder system for daily mood check-ins.
+## 📧 Email Setup (verification, reset & reminders)
 
-### To Enable Email Reminders:
+Email powers three things: account verification, password reset, and check-in reminders. All three need valid Gmail SMTP credentials.
 
-1. **Get Gmail App Password:**
-   - Go to https://myaccount.google.com/apppasswords
-   - Enable 2FA first if needed
-   - Generate a 16-character app password
-   - Copy it to `backend/.env` as `EMAIL_PASSWORD`
+1. **Enable 2-Step Verification** on the Gmail account.
+2. **Create an App Password:** https://myaccount.google.com/apppasswords → copy the **16-character** code.
+3. Put it in `backend/.env` as `EMAIL_PASSWORD` (spaces are stripped automatically) and set `EMAIL_FROM`.
+4. **Restart the backend.** On startup it logs whether SMTP credentials authenticate — look for `[email] SMTP credentials authenticated…`.
+5. In the app: **Settings → Email Reminders** → toggle on, pick a time/timezone, save.
 
-2. **Update Configuration:**
-   - Set `EMAIL_FROM` in `.env`
-   - Set `EMAIL_PASSWORD` with the app password from step 1
-
-3. **Restart Backend:**
+Quick credential/reminder check:
 ```bash
-python backend/run.py
+python scripts/test_reminders.py
 ```
 
-4. **Test the Setup:**
-```bash
-# Run verification checklist
-python verify_setup.py
+## 📚 API Endpoints (selected)
 
-# Run reminder system tests
-python test_reminders.py
+### Authentication (`/api/auth`) — open
+- `POST /register` — create account (rejects undeliverable email domains; emails a verification code)
+- `POST /login` — obtain access + refresh tokens
+- `POST /refresh` — rotate tokens
+- `POST /verify-email` — confirm the 6-digit code
+- `POST /resend-verification` — re-send a verification code
+- `POST /forgot-password` — email a reset code
+- `POST /reset-password` — set a new password using the code
+- `GET /me`, `PUT /profile`, `PUT /change-password`, `GET /export-data`, `DELETE /account`
+
+### Data endpoints — **require a verified email**
+- `survey` (`/api/survey`) — baseline survey + wellness score
+- `diary` (`/api/diary`) — entries CRUD + `POST /diary/speech-to-text`
+- `chatbot` (`/api/chatbot`) — chat sessions & messages
+- `reminders` (`/api/reminders/preferences`) — GET / PUT / DELETE reminder settings
+
+## 🗄️ Database & Migrations
+
+Schema is owned by **Alembic** (the app does not create tables at import time).
+
+```bash
+alembic upgrade head            # apply latest
+alembic revision -m "message"   # create a new migration
+alembic downgrade -1            # roll back one
 ```
 
-5. **Configure in App:**
-   - Open app at `http://localhost:3000`
-   - Go to Settings → Email Reminders
-   - Toggle ON, select preferred time, and Save
+## 🔒 Security
 
-## 📚 API Endpoints
-
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/me` - Get current user info
-
-### Reminders
-- `GET /api/reminders/preferences` - Get user reminder settings
-- `PUT /api/reminders/preferences` - Update reminder settings
-- `DELETE /api/reminders/preferences` - Disable reminders
-
-### Mood Check-ins
-- `GET /api/checkins` - Get user check-ins
-- `POST /api/checkins` - Create new check-in
-- `GET /api/checkins/{id}` - Get check-in details
-
-### Journal
-- `GET /api/journal` - Get journal entries
-- `POST /api/journal` - Create entry
-- `GET /api/journal/{id}` - Get entry details
+- bcrypt password hashing; JWT access + refresh with full claim validation (exp/iat/nbf/iss/aud/jti).
+- Refresh-token rotation + replay protection.
+- In-memory rate limiting on auth, verification, and reset endpoints.
+- **Mandatory email verification** — data routers reject unverified users (403).
+- **Deliverability check** — registration rejects domains that can't receive mail (MX lookup).
+- CORS restricted to configured origins; secrets only via environment; response models never leak password hashes.
 
 ## 🧪 Testing
 
-### Test Email Reminders
 ```bash
-python test_reminders.py
-```
-This validates the complete reminder system without needing real Gmail credentials.
+# Backend
+cd backend && pytest
 
-### Verify Setup
-```bash
-python verify_setup.py
-```
-This checks that all required files are in place and shows the quick start guide.
-
-### Frontend Tests
-```bash
+# Frontend
 npm test
 ```
 
 ## 🛠️ Tech Stack
 
-**Frontend:**
-- React 18
-- React Router v6
-- Axios (HTTP client)
-- Tailwind CSS (styling)
+**Frontend:** React 18 · React Router v6 · Axios · Tailwind CSS 3 · Jest/RTL · MediaRecorder & SpeechRecognition Web APIs
 
-**Backend:**
-- FastAPI (Python web framework)
-- SQLAlchemy (ORM)
-- PostgreSQL (database)
-- PyJWT (authentication)
-- python-jose (JWT tokens)
-- pytz (timezone support)
+**Backend:** FastAPI · Uvicorn · SQLAlchemy 2.0 · PostgreSQL · Alembic · Pydantic v2 · python-jose (JWT) · passlib/bcrypt · pytz · email-validator + dnspython
 
-**ML/NLP:**
-- Whisper (speech-to-text)
-- NLTK (natural language processing)
-- scikit-learn (machine learning)
-
-## 📖 Documentation
-
-Additional documentation is available in:
-- `backend/README.md` - Backend-specific setup and endpoints
-- `EMAIL_REMINDERS_SETUP.md` - Detailed email reminders configuration
-- `REMINDER_SYSTEM_SUMMARY.md` - Feature overview and architecture
-
-## 🔒 Security
-
-- User passwords are hashed with bcrypt
-- API uses JWT authentication tokens
-- Environment variables store sensitive data (never commit `.env`)
-- HTTPS recommended for production
-
-## 🤝 Contributing
-
-To contribute to this project:
-
-1. Create a feature branch
-2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
-
-## 📝 License
-
-This project is private. All rights reserved.
+**AI/ML/NLP:** Hugging Face Transformers (multilingual sentiment + emotion) · scikit-learn (Random Forest wellness model) · OpenAI Whisper (local STT) · Anthropic Claude (`claude-sonnet-4-6`)
 
 ## 💡 Troubleshooting
 
-**Backend won't start:**
-- Ensure PostgreSQL is running
-- Check database credentials in `.env`
-- Run `pip install -r requirements.txt` again
+**Backend won't start**
+- Is PostgreSQL running and `DATABASE_URL` correct?
+- Did you run `alembic upgrade head`?
+- Re-run `pip install -r requirements.txt`.
 
-**Frontend won't connect to backend:**
-- Verify backend is running on `http://localhost:8000`
-- Check browser console for CORS errors
-- Ensure `.env` has correct API base URL
+**Frontend can't reach backend**
+- Backend running on `http://localhost:8000`?
+- Check the browser console for CORS errors.
 
-**Email reminders not working:**
-- Run `python verify_setup.py` to check setup
-- Verify Gmail app password is correct
-- Check backend logs for SMTP errors
-- Allow less secure apps: https://myaccount.google.com/lesssecureapps
+**Email (verification / reset / reminders) not sending**
+- Use a valid **16-character Gmail App Password** with 2-Step Verification enabled.
+- Watch the backend startup log: `[email] …` tells you if SMTP auth failed.
+- Reminders only send to **verified** addresses, and only while the backend is running.
 
+## 📝 License
 
+Private project. All rights reserved.
+
+---
 **Built with ❤️ for mental health awareness**
