@@ -64,6 +64,19 @@ export const getCalendarGrid = (year, month) => {
 
 export const isFutureDate = (dateValue, todayValue) => dateValue > todayValue;
 
+// The NLP pipeline stores mood as low/medium/high, while the diary editor uses
+// positive/neutral/negative. The UI (moodMeta) only knows the latter three, so
+// normalize to those keys and default anything unknown/missing to 'neutral'.
+const MOOD_ALIASES = { low: 'negative', medium: 'neutral', high: 'positive' };
+
+export const normalizeMood = (mood) => {
+  const key = (mood || '').toString().toLowerCase();
+  if (key === 'positive' || key === 'neutral' || key === 'negative') {
+    return key;
+  }
+  return MOOD_ALIASES[key] || 'neutral';
+};
+
 export const mapApiEntryToUi = (entry) => {
   const parsedDate = entry.created_at ? new Date(entry.created_at) : new Date();
   const safeTags = Array.isArray(entry.tags) ? entry.tags : [];
@@ -75,7 +88,7 @@ export const mapApiEntryToUi = (entry) => {
     title: entry.title,
     content: entry.content,
     preview: entry.content.slice(0, 120) + (entry.content.length > 120 ? '...' : ''),
-    mood: entry.mood,
+    mood: normalizeMood(entry.mood),
     tags: safeTags,
   };
 };
