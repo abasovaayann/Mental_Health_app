@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
 
 const Login = ({ onSuccess }) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -104,6 +106,7 @@ const Login = ({ onSuccess }) => {
         <div className="flex justify-end">
           <button
             type="button"
+            onClick={() => navigate('/forgot-password')}
             className="text-sm font-semibold text-primary hover:text-primary-dark hover:underline"
           >
             Forgot Password?

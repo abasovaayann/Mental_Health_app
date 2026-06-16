@@ -41,3 +41,21 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
+
+async def require_verified_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Block access unless the user has verified their email.
+
+    Used as a router-level dependency on data endpoints so an unverified
+    account (i.e. an unproven/non-existent email) cannot read or write data.
+    """
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please verify your email to continue.",
+        )
+    return current_user

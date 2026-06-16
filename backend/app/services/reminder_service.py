@@ -114,11 +114,16 @@ class ReminderService:
     def send_pending_reminders(db: Session) -> dict:
         """Check all users and send pending reminders."""
         
-        # Get all active reminders
+        # Get all active reminders. Unverified emails are skipped so reminders
+        # never go to an address the user hasn't proven they own.
         active_reminders = (
             db.query(UserReminder)
             .join(User)
-            .filter(UserReminder.enabled == True, User.is_active == True)
+            .filter(
+                UserReminder.enabled == True,
+                User.is_active == True,
+                User.is_verified == True,
+            )
             .all()
         )
         

@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
+import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
 import BaselineSurvey from './pages/BaselineSurvey';
 import Dashboard from './pages/Dashboard';
 import Diary from './pages/Diary';
@@ -20,6 +22,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/auth" replace />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/baseline-survey" element={<BaselineSurvey />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/diary" element={<PreviousEntries />} />

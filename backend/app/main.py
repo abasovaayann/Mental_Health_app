@@ -15,15 +15,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.config import settings
 from app.database import SessionLocal
+from app.services.email_service import get_email_service
 from app.services.reminder_service import ReminderService
 
 logger = logging.getLogger(__name__)
 
-REMINDER_INTERVAL_SECONDS = 3600
+# Check every 5 minutes. This must stay <= the ±5-min send window in
+# ReminderService.should_send_reminder, otherwise a user's chosen reminder
+# time can fall between two checks and be missed for the day. Duplicate sends
+# are prevented by the 23h/6d min-gap guard on UserReminder.last_sent_at.
+REMINDER_INTERVAL_SECONDS = 300
 
 
 async def _check_reminders_periodically() -> None:
-    """Send any pending reminders once per hour until cancelled."""
+    """Send any pending reminders every few minutes until cancelled."""
     while True:
         try:
             db = SessionLocal()
@@ -37,9 +42,31 @@ async def _check_reminders_periodically() -> None:
         await asyncio.sleep(REMINDER_INTERVAL_SECONDS)
 
 
+async def _verify_email_credentials_on_startup() -> None:
+    """Log a loud, clear message about whether reminder emails can be sent.
+
+    Runs off the event loop so a slow SMTP handshake doesn't block startup.
+    Never raises — email is an optional feature and must not stop the app.
+    """
+    email_service = get_email_service()
+    if not email_service.is_configured():
+        logger.warning(
+            "[email] Reminder emails are DISABLED: EMAIL_FROM/EMAIL_PASSWORD "
+            "are not configured in the environment."
+        )
+        return
+
+    ok, detail = await asyncio.to_thread(email_service.verify_credentials)
+    if ok:
+        logger.info("[email] %s", detail)
+    else:
+        logger.error("[email] Reminder emails will NOT be sent: %s", detail)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start and cleanly stop the background reminder task."""
+    await _verify_email_credentials_on_startup()
     reminder_task = asyncio.create_task(_check_reminders_periodically())
     try:
         yield

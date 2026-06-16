@@ -5,9 +5,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, UserUpdate, PasswordChange, UserPreferences, RefreshTokenRequest
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, UserUpdate, PasswordChange, UserPreferences, RefreshTokenRequest, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
 from app.utils.auth import verify_password, get_password_hash, create_access_token, create_refresh_token, decode_refresh_token
 from app.utils.dependencies import get_current_user
+from app.services.verification_service import VerificationService
 from app.config import settings
 
 router = APIRouter()
@@ -93,6 +94,23 @@ def _merged_preferences(raw_json: str | None):
     return base
 
 
+def _assert_email_deliverable(email: str) -> None:
+    """Reject emails whose domain cannot receive mail (no MX/A records).
+
+    Catches non-existent/typo domains at registration. It cannot prove a
+    specific mailbox exists — that guarantee comes from email verification.
+    """
+    from email_validator import validate_email, EmailNotValidError
+
+    try:
+        validate_email(email, check_deliverability=True)
+    except EmailNotValidError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"This email address can't receive mail: {exc}",
+        )
+
+
 @router.post("/register", response_model=dict, status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
     """Register a new user."""
@@ -100,7 +118,10 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
     ip_key = _rate_limit_key("register", request)
     _check_rate_limit(email_key)
     _check_rate_limit(ip_key)
-    
+
+    # Reject domains that cannot receive mail before creating anything.
+    _assert_email_deliverable(user_data.email)
+
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -131,7 +152,14 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
     db.refresh(db_user)
     _clear_rate_limit(email_key)
     _clear_rate_limit(ip_key)
-    
+
+    # Send a verification code (best-effort — never block signup on email).
+    try:
+        VerificationService.issue_code(db, db_user)
+    except Exception:  # noqa: BLE001 — email is optional, account is already created
+        import logging
+        logging.getLogger(__name__).exception("Failed to issue verification code on register")
+
     # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
@@ -154,6 +182,90 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
             "baselineCompletedAt": db_user.baseline_completed_at
         }
     }
+
+
+@router.post("/verify-email", response_model=dict)
+def verify_email(
+    payload: VerifyEmailRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Verify the current user's email using the 6-digit code."""
+    ok, message = VerificationService.verify_code(db, current_user, payload.code)
+    if not ok:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+    return {"message": message, "isVerified": True}
+
+
+@router.post("/resend-verification", response_model=dict)
+def resend_verification(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Re-issue and resend a verification code to the current user."""
+    if current_user.is_verified:
+        return {"message": "Email already verified.", "isVerified": True}
+
+    key = _rate_limit_key("resend_verification", request, str(current_user.id))
+    _check_rate_limit(key)
+    sent = VerificationService.issue_code(db, current_user)
+    if not sent:
+        _record_rate_failure(key)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not send verification email. Try again later.",
+        )
+    _record_rate_failure(key)  # count successful sends too, to throttle resends
+    return {"message": "Verification code sent.", "isVerified": False}
+
+
+@router.post("/forgot-password", response_model=dict)
+def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    """Email a password-reset code. Always responds generically to avoid
+    revealing whether an address is registered."""
+    ip_key = _rate_limit_key("forgot_password", request)
+    email_key = _rate_limit_key("forgot_password", request, payload.email.lower())
+    _check_rate_limit(ip_key)
+    _check_rate_limit(email_key)
+    _record_rate_failure(ip_key)
+    _record_rate_failure(email_key)
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    if user and user.is_active:
+        try:
+            VerificationService.issue_reset_code(db, user)
+        except Exception:  # noqa: BLE001 — never leak send/lookup errors
+            import logging
+            logging.getLogger(__name__).exception("Failed to issue reset code")
+
+    return {"message": "If that email is registered, a reset code has been sent."}
+
+
+@router.post("/reset-password", response_model=dict)
+def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    """Set a new password using the emailed reset code."""
+    ip_key = _rate_limit_key("reset_password", request, payload.email.lower())
+    _check_rate_limit(ip_key)
+
+    user = db.query(User).filter(User.email == payload.email).first()
+    generic_error = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid or expired reset code.",
+    )
+    if not user:
+        _record_rate_failure(ip_key)
+        raise generic_error
+
+    ok, message = VerificationService.reset_password(
+        db, user, payload.code, get_password_hash(payload.new_password)
+    )
+    if not ok:
+        _record_rate_failure(ip_key)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
+
+    _clear_rate_limit(ip_key)
+    return {"message": message}
 
 
 @router.post("/login", response_model=dict)
@@ -340,11 +452,30 @@ def delete_account(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Delete current user's account and all associated data."""
-    from app.models.survey import BaselineSurvey
-    from app.models.diary import DiaryEntry
-    db.query(BaselineSurvey).filter(BaselineSurvey.user_id == current_user.id).delete()
-    db.query(DiaryEntry).filter(DiaryEntry.user_id == current_user.id).delete()
+    """Delete current user's account and all associated data.
+
+    Every table that references ``app_users`` must be cleared first or the
+    final user delete fails with a foreign-key violation. Children are deleted
+    before their parents (e.g. analyses before diary entries, messages before
+    chat sessions).
+    """
+    from sqlalchemy import text
+
+    # FK-safe order: child/leaf tables first, parent tables last.
+    related_tables = (
+        "diary_entry_analyses",  # -> diary_entries
+        "chat_messages",         # -> chat_sessions
+        "diary_entries",
+        "chat_sessions",
+        "daily_checkins",
+        "baseline_surveys",
+        "user_reminders",
+    )
+    for table in related_tables:
+        db.execute(
+            text(f"DELETE FROM {table} WHERE user_id = :uid"),
+            {"uid": current_user.id},
+        )
     db.delete(current_user)
     db.commit()
     return {"message": "Account deleted successfully"}

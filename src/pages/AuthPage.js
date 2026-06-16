@@ -11,7 +11,13 @@ const AuthPage = () => {
   const handleAuthSuccess = () => {
     // Get user data from localStorage
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
+
+    // Unverified accounts must confirm their email first.
+    if (user.isVerified === false) {
+      navigate('/verify-email');
+      return;
+    }
+
     // Check if baseline survey is completed
     if (!user.baselineCompleted) {
       // Redirect to baseline survey

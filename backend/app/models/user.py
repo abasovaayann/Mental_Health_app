@@ -24,6 +24,14 @@ class User(Base):
     # Account status
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
+    # Email verification (one active 6-digit code per user; see VerificationService).
+    verification_code_hash = Column(String, nullable=True)
+    verification_code_expires_at = Column(DateTime(timezone=True), nullable=True)
+    verification_attempts = Column(Integer, default=0, nullable=False)
+    # Password reset (one active 6-digit code per user; see VerificationService).
+    reset_code_hash = Column(String, nullable=True)
+    reset_code_expires_at = Column(DateTime(timezone=True), nullable=True)
+    reset_attempts = Column(Integer, default=0, nullable=False)
     baseline_completed = Column(Boolean, default=False, nullable=False)
     baseline_completed_at = Column(DateTime(timezone=True), nullable=True)
     preferences_json = Column(Text, nullable=False, default='{}')
