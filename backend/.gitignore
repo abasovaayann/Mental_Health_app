@@ -25,6 +25,11 @@ build/
 .coverage
 htmlcov/
 
+# Local-only seed / demo-data scripts (inject synthetic data for the test
+# account). Not real tests — the pytest suite under tests/ stays tracked.
+add_test_*.py
+seed_test_account.py
+
 # Database
 *.db
 *.sqlite3
