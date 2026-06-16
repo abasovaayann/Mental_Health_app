@@ -24,6 +24,8 @@ const Dashboard = () => {
   const [dailyCheckinHistory, setDailyCheckinHistory] = useState({});
   const [scoreLoading, setScoreLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [surveyHistory, setSurveyHistory] = useState([]);
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -37,13 +39,20 @@ const Dashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const [profileResult, scoreResult, activityResult, diaryResult, checkinsResult] = await Promise.allSettled([
+      const [profileResult, scoreResult, activityResult, diaryResult, checkinsResult, historyResult] = await Promise.allSettled([
         api.get('/auth/me'),
         api.get('/survey/wellness-score'),
         api.get('/survey/activity-stats'),
         api.get('/diary/stats'),
         api.get('/survey/daily-checkins'),
+        api.get('/survey/history'),
       ]);
+
+      if (historyResult.status === 'fulfilled') {
+        setSurveyHistory(historyResult.value.data.surveys ?? []);
+      } else if (historyResult.reason?.response?.status !== 404) {
+        console.error('Could not load survey history', historyResult.reason);
+      }
 
       if (profileResult.status === 'fulfilled') {
         const profile = profileResult.value.data;
@@ -344,16 +353,124 @@ const Dashboard = () => {
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => navigate('/baseline-survey')}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-hover"
-                >
-                  {user.baselineCompleted ? 'Review Survey' : 'Start Check-in'}
-                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
-                </button>
+                <div className="flex flex-col gap-2">
+                  {user.baselineCompleted && surveyHistory.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setReviewOpen(true)}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-hover"
+                    >
+                      Review Survey
+                      <span className="material-symbols-outlined text-sm">history</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => navigate('/baseline-survey')}
+                    className={`inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 font-semibold shadow-md transition-all ${
+                      user.baselineCompleted
+                        ? 'border border-primary/40 bg-transparent text-primary hover:bg-primary/10 dark:text-blue-300'
+                        : 'bg-primary text-white hover:bg-primary-hover'
+                    }`}
+                  >
+                    {user.baselineCompleted ? 'Take New Survey' : 'Start Survey'}
+                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                  </button>
+                </div>
               </div>
             </div>
+
+            {reviewOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setReviewOpen(false)}>
+                <div className="max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-surface-light p-6 shadow-2xl dark:bg-surface-dark" onClick={(e) => e.stopPropagation()}>
+                  <div className="mb-4 flex items-start justify-between">
+                    <div>
+                      <h3 className="font-display text-xl font-bold text-slate-800 dark:text-slate-100">Survey results</h3>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {surveyHistory.length > 1
+                          ? `Your current result and ${surveyHistory.length - 1} past ${surveyHistory.length - 1 === 1 ? 'survey' : 'surveys'}.`
+                          : 'Your current result.'}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => setReviewOpen(false)} className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">
+                      <span className="material-symbols-outlined">close</span>
+                    </button>
+                  </div>
+
+                  {(() => {
+                    // Wellness-score trend across surveys, oldest → newest.
+                    const series = surveyHistory.filter((s) => s.prediction).slice().reverse();
+                    if (series.length < 2) return null;
+                    const W = 300, H = 80, P = 10;
+                    const xs = series.map((_, i) => P + (i * (W - 2 * P)) / (series.length - 1));
+                    const ys = series.map((s) => H - P - (s.prediction.wellness_score / 100) * (H - 2 * P));
+                    const points = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+                    return (
+                      <div className="mb-4 rounded-xl border border-slate-200 p-4 dark:border-border-dark">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">Wellness trend</p>
+                          <span className="text-xs text-slate-400">{series.length} surveys</span>
+                        </div>
+                        <svg viewBox={`0 0 ${W} ${H}`} className="h-20 w-full">
+                          <polyline points={points} fill="none" stroke="#2f855a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          {xs.map((x, i) => (
+                            <circle key={series[i].id} cx={x} cy={ys[i]} r="3.5" fill="#2f855a" />
+                          ))}
+                        </svg>
+                        <div className="mt-1 flex justify-between text-[10px] text-slate-400">
+                          <span>{formatDate(series[0].created_at)}</span>
+                          <span>{formatDate(series[series.length - 1].created_at)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="space-y-3">
+                    {surveyHistory.map((item, index) => {
+                      const p = item.prediction;
+                      const styles = getRiskStyles(p?.risk_level ?? 1);
+                      return (
+                        <div key={item.id} className={`rounded-xl border p-4 ${index === 0 ? 'border-primary/40 bg-primary/5' : 'border-slate-200 dark:border-border-dark'}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${styles.ring} text-white`}>
+                                <span className="text-sm font-extrabold">{p ? p.wellness_score : '—'}</span>
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${styles.badge}`}>
+                                    {p ? p.risk_label : 'No prediction'}
+                                  </span>
+                                  {index === 0 && (
+                                    <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase text-white">Current</span>
+                                  )}
+                                </div>
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{formatDate(item.created_at)}</p>
+                              </div>
+                            </div>
+                            {p && (
+                              <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                                <div className="font-semibold text-slate-700 dark:text-slate-200">{p.wellness_score}/100</div>
+                                <div>risk {(p.risk_probability * 100).toFixed(0)}%</div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => { setReviewOpen(false); navigate('/baseline-survey'); }}
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-hover"
+                  >
+                    Take New Survey
+                    <span className="material-symbols-outlined text-sm">add</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className="rounded-2xl border border-slate-100 bg-surface-light p-6 shadow-sm dark:border-border-dark dark:bg-surface-dark md:col-span-1 lg:col-span-2">
               <div className="mb-5 flex items-center justify-between">

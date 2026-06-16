@@ -18,6 +18,22 @@ from ml.predict import predict_wellness
 router = APIRouter()
 
 
+def _survey_raw_answers(survey: BaselineSurvey) -> dict:
+    """Map a BaselineSurvey row to the raw answers dict the ML model expects."""
+    return {
+        "sleep_duration":            survey.sleep_duration,
+        "energy_level":              survey.energy_level,
+        "academic_pressure":         survey.academic_pressure,
+        "study_motivation":          survey.study_motivation,
+        "concentration_difficulty":  survey.concentration_difficulty,
+        "morning_mood":              survey.morning_mood,
+        "emotional_low":             survey.emotional_low,
+        "anxiety_level":             survey.anxiety_level,
+        "social_support":            survey.social_support,
+        "financial_stress":          survey.financial_stress,
+    }
+
+
 @router.get("/daily-checkins", response_model=list[DailyCheckinResponse])
 async def list_daily_checkins(
     current_user: User = Depends(get_current_user),
@@ -75,19 +91,9 @@ async def submit_baseline_survey(
     db: Session = Depends(get_db)
 ):
     """
-    Submit baseline survey responses
+    Submit a survey. Users may take the survey more than once; each submission
+    is stored as a new row so the dashboard can show a full history of results.
     """
-    # Check if user already has a baseline survey
-    existing_survey = db.query(BaselineSurvey).filter(
-        BaselineSurvey.user_id == current_user.id
-    ).first()
-    
-    if existing_survey:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Baseline survey already submitted"
-        )
-    
     # Create new survey
     new_survey = BaselineSurvey(
         user_id=current_user.id,
@@ -140,19 +146,55 @@ async def get_baseline_survey(
     db: Session = Depends(get_db)
 ):
     """
-    Get user's baseline survey data
+    Get the user's most recent survey.
     """
-    survey = db.query(BaselineSurvey).filter(
-        BaselineSurvey.user_id == current_user.id
-    ).first()
-    
+    survey = (
+        db.query(BaselineSurvey)
+        .filter(BaselineSurvey.user_id == current_user.id)
+        .order_by(BaselineSurvey.created_at.desc(), BaselineSurvey.id.desc())
+        .first()
+    )
+
     if not survey:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Baseline survey not found"
         )
-    
+
     return survey
+
+
+@router.get("/history")
+async def get_survey_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Return every survey the user has taken (newest first), each with its
+    computed wellness prediction, so the dashboard can show current and past
+    results together.
+    """
+    surveys = (
+        db.query(BaselineSurvey)
+        .filter(BaselineSurvey.user_id == current_user.id)
+        .order_by(BaselineSurvey.created_at.desc(), BaselineSurvey.id.desc())
+        .all()
+    )
+
+    history = []
+    for survey in surveys:
+        try:
+            prediction = predict_wellness(_survey_raw_answers(survey))
+        except Exception:  # noqa: BLE001 — a bad row must not break the list
+            prediction = None
+        history.append({
+            "id": survey.id,
+            "created_at": survey.created_at,
+            "answers": _survey_raw_answers(survey),
+            "prediction": prediction,
+        })
+
+    return {"count": len(history), "surveys": history}
 
 
 @router.get("/wellness-score")
@@ -164,9 +206,12 @@ async def get_wellness_score(
     Get the ML-based wellness score for the current user.
     Uses the baseline survey answers + trained Random Forest model.
     """
-    survey = db.query(BaselineSurvey).filter(
-        BaselineSurvey.user_id == current_user.id
-    ).first()
+    survey = (
+        db.query(BaselineSurvey)
+        .filter(BaselineSurvey.user_id == current_user.id)
+        .order_by(BaselineSurvey.created_at.desc(), BaselineSurvey.id.desc())
+        .first()
+    )
 
     if not survey:
         raise HTTPException(
@@ -174,19 +219,8 @@ async def get_wellness_score(
             detail="Baseline survey not found. Please complete the assessment first."
         )
 
-    # Build the raw answers dict from the DB record
-    raw_answers = {
-        "sleep_duration":            survey.sleep_duration,
-        "energy_level":              survey.energy_level,
-        "academic_pressure":         survey.academic_pressure,
-        "study_motivation":          survey.study_motivation,
-        "concentration_difficulty":  survey.concentration_difficulty,
-        "morning_mood":              survey.morning_mood,
-        "emotional_low":             survey.emotional_low,
-        "anxiety_level":             survey.anxiety_level,
-        "social_support":            survey.social_support,
-        "financial_stress":          survey.financial_stress,
-    }
+    # Build the raw answers dict from the latest survey record
+    raw_answers = _survey_raw_answers(survey)
 
     prediction = predict_wellness(raw_answers)
 
